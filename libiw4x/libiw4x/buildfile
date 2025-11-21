@@ -18,6 +18,9 @@ cxx.poptions =+ "-I$out_root" "-I$src_root"
 obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
 
+if ($config.libiw4x.develop)
+  cxx.poptions =+ "-DLIBIW4X_DEVELOP"
+
 # Export options.
 #
 lib{iw4x}:

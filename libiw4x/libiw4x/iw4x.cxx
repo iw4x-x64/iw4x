@@ -8,9 +8,10 @@ extern "C"
   #include <io.h>
 }
 
+#include <libiw4x/dedicated/init.hxx>
 #include <libiw4x/frame/init.hxx>
 #include <libiw4x/menu/init.hxx>
-#include <libiw4x/dedicated/init.hxx>
+#include <libiw4x/network/init.hxx>
 
 using namespace std;
 
@@ -232,6 +233,8 @@ namespace iw4x
             memset (reinterpret_cast<void*> (address), value, size);
           });
 
+        minhook::initialize ();
+
         //
         //
         scheduler s;
@@ -240,6 +243,7 @@ namespace iw4x
         //
         frame::init (s);
         menu::init (s);
+        network::init (s);
         dedicated::init ();
 
         // __scrt_common_main_seh

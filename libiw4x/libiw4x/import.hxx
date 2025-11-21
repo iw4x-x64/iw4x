@@ -4625,6 +4625,9 @@ namespace iw4x
     XAssetEntryPoolEntry *next;
   };
 
+  // Game internal symbols
+  //
+
   using  NET_Config_t = int (*) (int);
   inline NET_Config_t NET_Config = reinterpret_cast<NET_Config_t> (0x1402A9510);
 
@@ -4675,4 +4678,9 @@ namespace iw4x
 
   using  CL_ConnectFromParty_t = void (*) (int, void*, netadr_t, int, int, const char*, const char*);
   inline CL_ConnectFromParty_t CL_ConnectFromParty = reinterpret_cast<CL_ConnectFromParty_t> (0x1400F5220);
+
+  // Game internal variables.
+  //
+  inline SOCKET* ip_socket  (reinterpret_cast<SOCKET*> (0x1467E8490));
+  inline SOCKET* lsp_socket (reinterpret_cast<SOCKET*> (0x1467E8498));
 }
