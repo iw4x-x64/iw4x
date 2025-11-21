@@ -1,0 +1,22 @@
+import! nasm = nasm%exe{nasm}
+
+# There is no built-in rule to synthesize the lib{s,a} -> obj{s,a} -> asm{}
+# dependencies so we have to do it manually.
+#
+for n: oob/init
+{
+  libs{iw4x}: objs{$(n).asm.so.o}
+  liba{iw4x}: obja{$(n).asm.a.o}
+
+  objs{$(n).asm.so.o}: file{$(n).asm} $nasm
+  {{
+    diag nasm ($<[0])
+    $nasm -f win64 -o $path($>) $path($<[0])
+  }}
+
+  obja{$(n).asm.a.o}: file{$(n).asm} $nasm
+  {{
+    diag nasm ($<[0])
+    $nasm -f win64 -o $path($>) $path($<[0])
+  }}
+}

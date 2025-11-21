@@ -1,4 +1,5 @@
 source buildfile-cli
+source buildfile-asm
 
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
