@@ -70,7 +70,7 @@ namespace iw4x
       template <typename Target, typename Source>
         requires (std::is_function_v<std::remove_pointer_t<Target>> &&
                   std::is_function_v<std::remove_pointer_t<Source>>)
-      LIBIW4X_UTILITY_SYMEXPORT inline void
+      inline void
       create (Target& target, Source source)
       {
         void* t = reinterpret_cast<void*> (target);
