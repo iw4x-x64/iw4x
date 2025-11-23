@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 
@@ -11,6 +12,11 @@ namespace iw4x
 {
   namespace utility
   {
+    namespace detail
+    {
+      struct xxh64_state;
+    }
+
     // Compute xxHash64 of a string with default seed (0).
     //
     LIBIW4X_UTILITY_SYMEXPORT std::uint64_t
@@ -74,12 +80,11 @@ namespace iw4x
       //
       // The hasher can continue to be used after calling digest().
       //
-      std::uint64_t
+      [[nodiscard]] std::uint64_t
       digest () const;
 
     private:
-      struct state;
-      state* state_;
+      std::unique_ptr<detail::xxh64_state> state;
     };
   }
 }

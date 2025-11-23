@@ -35,70 +35,70 @@ namespace iw4x
     // xxh64_hasher
     //
 
-    struct xxh64_hasher::state
+    namespace detail
     {
-      XXH64_state_t* st;
+      struct xxh64_state
+      {
+        XXH64_state_t* st;
 
-      state ()
+        xxh64_state ()
           : st (XXH64_createState ())
-      {
-      }
+        {
+        }
 
-      ~state ()
-      {
-        if (st != nullptr)
-          XXH64_freeState (st);
-      }
-    };
+        ~xxh64_state ()
+        {
+          if (st != nullptr)
+            XXH64_freeState (st);
+        }
+      };
+    }
 
     xxh64_hasher::
     xxh64_hasher ()
-        : state_ (new state ())
+      : state (make_unique<detail::xxh64_state> ())
     {
-      XXH64_reset (state_->st, 0);
+      XXH64_reset (state->st, 0);
     }
 
     xxh64_hasher::
     xxh64_hasher (uint64_t s)
-        : state_ (new state ())
+      : state (make_unique<detail::xxh64_state> ())
     {
-      XXH64_reset (state_->st, s);
+      XXH64_reset (state->st, s);
     }
 
     xxh64_hasher::
-    ~xxh64_hasher ()
-    {
-      delete state_;
-    }
+    ~xxh64_hasher () = default;
 
     void xxh64_hasher::
     reset ()
     {
-      XXH64_reset (state_->st, 0);
+      XXH64_reset (state->st, 0);
     }
 
     void xxh64_hasher::
     reset (uint64_t s)
     {
-      XXH64_reset (state_->st, s);
+      XXH64_reset (state->st, s);
     }
 
     void xxh64_hasher::
     update (const string& in)
     {
-      XXH64_update (state_->st, in.data (), in.size ());
+      XXH64_update (state->st, in.data (), in.size ());
     }
 
     void xxh64_hasher::
     update (span<const byte> in)
     {
-      XXH64_update (state_->st, in.data (), in.size ());
+      XXH64_update (state->st, in.data (), in.size ());
     }
 
     uint64_t xxh64_hasher::
     digest () const
     {
-      return XXH64_digest (state_->st);
+      return XXH64_digest (state->st);
     }
   }
 }
