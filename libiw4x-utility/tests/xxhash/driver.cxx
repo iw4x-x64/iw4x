@@ -7,13 +7,15 @@
 #undef NDEBUG
 #include <cassert>
 
-int main ()
-{
-  using namespace std;
-  using namespace iw4x::utility;
+using namespace std;
+using namespace iw4x::utility;
 
+namespace
+{
   // Test xxh64() with string and default seed
   //
+  void
+  test_xxh64_string_default_seed ()
   {
     uint64_t h (xxh64 ("hello world"));
     assert (h != 0);
@@ -31,6 +33,8 @@ int main ()
 
   // Test xxh64() with string and custom seed
   //
+  void
+  test_xxh64_string_custom_seed ()
   {
     uint64_t h1 (xxh64 ("hello world", 0));
     uint64_t h2 (xxh64 ("hello world", 42));
@@ -47,6 +51,8 @@ int main ()
 
   // Test xxh64() with empty string
   //
+  void
+  test_xxh64_empty_string ()
   {
     uint64_t h1 (xxh64 (""));
     uint64_t h2 (xxh64 (""));
@@ -60,28 +66,32 @@ int main ()
 
   // Test xxh64() with binary data and default seed
   //
+  void
+  test_xxh64_binary_default_seed ()
   {
-    const std::byte data[] = {std::byte{0x01}, std::byte{0x02}, std::byte{0x03}, std::byte{0x04}};
-    uint64_t h (xxh64 (std::span{data}));
+    const byte data [] = {byte {0x01}, byte {0x02}, byte {0x03}, byte {0x04}};
+    uint64_t h (xxh64 (span {data}));
     assert (h != 0);
 
     // Same data should produce same hash
     //
-    uint64_t h2 (xxh64 (std::span{data}));
+    uint64_t h2 (xxh64 (span {data}));
     assert (h == h2);
 
     // Different length should produce different hash
     //
-    uint64_t h3 (xxh64 (std::span{data, 3}));
+    uint64_t h3 (xxh64 (span {data, 3}));
     assert (h != h3);
   }
 
   // Test xxh64() with binary data and custom seed
   //
+  void
+  test_xxh64_binary_custom_seed ()
   {
-    const std::byte data[] = {std::byte{0x01}, std::byte{0x02}, std::byte{0x03}, std::byte{0x04}};
-    uint64_t h1 (xxh64 (std::span{data}, 0));
-    uint64_t h2 (xxh64 (std::span{data}, 123));
+    const byte data [] = {byte {0x01}, byte {0x02}, byte {0x03}, byte {0x04}};
+    uint64_t h1 (xxh64 (span {data}, 0));
+    uint64_t h2 (xxh64 (span {data}, 123));
 
     // Different seeds should produce different hashes
     //
@@ -90,9 +100,11 @@ int main ()
 
   // Test xxh64() with null-terminated string as binary data
   //
+  void
+  test_xxh64_string_as_binary ()
   {
     const char* str ("test");
-    std::span<const std::byte> sp (reinterpret_cast<const std::byte*> (str), strlen (str));
+    span<const byte> sp (reinterpret_cast<const byte*> (str), strlen (str));
     uint64_t h1 (xxh64 (sp));
     uint64_t h2 (xxh64 (string ("test")));
 
@@ -103,6 +115,8 @@ int main ()
 
   // Test xxh64_hasher with default seed
   //
+  void
+  test_xxh64_hasher_default_seed ()
   {
     xxh64_hasher hasher;
     hasher.update ("hello ");
@@ -117,6 +131,8 @@ int main ()
 
   // Test xxh64_hasher with custom seed
   //
+  void
+  test_xxh64_hasher_custom_seed ()
   {
     xxh64_hasher hasher (42);
     hasher.update ("hello world");
@@ -130,23 +146,30 @@ int main ()
 
   // Test xxh64_hasher with binary data
   //
+  void
+  test_xxh64_hasher_binary ()
   {
     xxh64_hasher hasher;
-    const byte data1[] = {byte{0x01}, byte{0x02}};
-    const byte data2[] = {byte{0x03}, byte{0x04}};
-    hasher.update (span{data1});
-    hasher.update (span{data2});
+    const byte data1 [] = {byte {0x01}, byte {0x02}};
+    const byte data2 [] = {byte {0x03}, byte {0x04}};
+    hasher.update (span {data1});
+    hasher.update (span {data2});
     uint64_t h (hasher.digest ());
 
     // Should match single-shot hash of combined data
     //
-    const byte combined[] = {byte{0x01}, byte{0x02}, byte{0x03}, byte{0x04}};
-    uint64_t h2 (xxh64 (span{combined}));
+    const byte combined [] = {byte {0x01},
+                              byte {0x02},
+                              byte {0x03},
+                              byte {0x04}};
+    uint64_t h2 (xxh64 (span {combined}));
     assert (h == h2);
   }
 
   // Test xxh64_hasher reset with default seed
   //
+  void
+  test_xxh64_hasher_reset_default ()
   {
     xxh64_hasher hasher;
     hasher.update ("first");
@@ -162,6 +185,8 @@ int main ()
 
   // Test xxh64_hasher reset with custom seed
   //
+  void
+  test_xxh64_hasher_reset_custom ()
   {
     xxh64_hasher hasher (0);
     hasher.update ("first");
@@ -177,6 +202,8 @@ int main ()
 
   // Test xxh64_hasher can continue after digest
   //
+  void
+  test_xxh64_hasher_continue_after_digest ()
   {
     xxh64_hasher hasher;
     hasher.update ("hello");
@@ -198,6 +225,8 @@ int main ()
 
   // Test xxh64_hasher with empty updates
   //
+  void
+  test_xxh64_hasher_empty_updates ()
   {
     xxh64_hasher hasher;
     hasher.update ("");
@@ -213,6 +242,8 @@ int main ()
 
   // Test xxh64_hasher with multiple small updates
   //
+  void
+  test_xxh64_hasher_multiple_small_updates ()
   {
     xxh64_hasher hasher;
     string input ("abcdefghijklmnopqrstuvwxyz");
@@ -233,6 +264,8 @@ int main ()
 
   // Test xxh64_hasher with large data
   //
+  void
+  test_xxh64_hasher_large_data ()
   {
     xxh64_hasher hasher;
     string large (10000, 'x');
@@ -247,6 +280,8 @@ int main ()
 
   // Test seed value 0 equivalence
   //
+  void
+  test_seed_zero_equivalence ()
   {
     // Default seed should be 0
     //
@@ -263,14 +298,42 @@ int main ()
 
   // Test binary data with embedded nulls
   //
+  void
+  test_binary_embedded_nulls ()
   {
-    const byte data[] = {byte{'a'}, byte{'\0'}, byte{'b'}, byte{'\0'}, byte{'c'}};
-    uint64_t h1 (xxh64 (span{data}));
+    const byte data [] = {byte {'a'},
+                          byte {'\0'},
+                          byte {'b'},
+                          byte {'\0'},
+                          byte {'c'}};
+    uint64_t h1 (xxh64 (span {data}));
 
     xxh64_hasher hasher;
-    hasher.update (span{data});
+    hasher.update (span {data});
     uint64_t h2 (hasher.digest ());
 
     assert (h1 == h2);
   }
+}
+
+int
+main ()
+{
+  test_xxh64_string_default_seed ();
+  test_xxh64_string_custom_seed ();
+  test_xxh64_empty_string ();
+  test_xxh64_binary_default_seed ();
+  test_xxh64_binary_custom_seed ();
+  test_xxh64_string_as_binary ();
+  test_xxh64_hasher_default_seed ();
+  test_xxh64_hasher_custom_seed ();
+  test_xxh64_hasher_binary ();
+  test_xxh64_hasher_reset_default ();
+  test_xxh64_hasher_reset_custom ();
+  test_xxh64_hasher_continue_after_digest ();
+  test_xxh64_hasher_empty_updates ();
+  test_xxh64_hasher_multiple_small_updates ();
+  test_xxh64_hasher_large_data ();
+  test_seed_zero_equivalence ();
+  test_binary_embedded_nulls ();
 }
