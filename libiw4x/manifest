@@ -12,5 +12,4 @@ email: wroy@proton.me
 depends: * build2 >= 0.18.0-
 depends: * bpkg >= 0.18.0-
 depends: libiw4x-utility == $
-depends: * cli >= 1.2.0 ? ($config.libiw4x.develop)
 depends: * nasm ^ 2.16.3

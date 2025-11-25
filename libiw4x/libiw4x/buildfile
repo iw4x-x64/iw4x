@@ -1,4 +1,3 @@
-source buildfile-cli
 source buildfile-asm
 
 intf_libs = # Interface dependencies.
@@ -6,8 +5,9 @@ impl_libs = # Implementation dependencies.
 
 import intf_libs += libiw4x-utility%lib{iw4x-utility}
 
-lib{iw4x}: {hxx cxx}{** -pregenerated/** -options -version} \
-           {hxx    }{                              version} \
+lib{iw4x}: {hxx ixx txx cxx}{** -version} \
+           {hxx            }{    version} \
+           {def            }{**         } \
            $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest
@@ -16,11 +16,11 @@ hxx{version}: in{version} $src_root/manifest
 #
 cxx.poptions =+ "-I$out_root" "-I$src_root"
 
-obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
-objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
-
 if ($config.libiw4x.develop)
   cxx.poptions =+ "-DLIBIW4X_DEVELOP"
+
+obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
+objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
 
 # Export options.
 #

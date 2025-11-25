@@ -8,7 +8,6 @@ extern "C"
   #include <io.h>
 }
 
-#include <libiw4x/dedicated/init.hxx>
 #include <libiw4x/frame/init.hxx>
 #include <libiw4x/menu/init.hxx>
 #include <libiw4x/network/init.hxx>
@@ -246,7 +245,6 @@ namespace iw4x
         menu::init (s);
         network::init (s);
         oob::init ();
-        dedicated::init ();
 
         // __scrt_common_main_seh
         //
