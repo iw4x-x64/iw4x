@@ -1,0 +1,12 @@
+#include <libiw4x/iw4x.hxx>
+#include <libiw4x/version.hxx>
+
+#undef NDEBUG
+#include <cassert>
+
+int
+main ()
+{
+  using namespace std;
+  using namespace iw4x;
+}

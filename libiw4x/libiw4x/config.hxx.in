@@ -1,0 +1,6 @@
+#pragma once
+
+namespace iw4x
+{
+  inline constexpr bool libiw4x_develop = $config.libiw4x.develop$;
+}
