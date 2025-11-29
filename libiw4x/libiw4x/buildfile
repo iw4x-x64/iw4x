@@ -3,7 +3,7 @@ impl_libs = # Implementation dependencies.
 
 lib{iw4x}: {hxx ixx txx cxx}{** -{config version}} \
            {hxx            }{     config version } \
-           {def            }{**                  }
+           {def            }{**                  } \
            $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest

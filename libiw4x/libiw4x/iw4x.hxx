@@ -28,6 +28,8 @@
 #  endif
 #endif
 
+#include <psapi.h>
+
 #include <libiw4x/export.hxx>
 
 namespace iw4x
