@@ -1,0 +1,5 @@
+: 1
+name: libiw4x-utility
+version: 0.1.0-a.0.z
+summary: iw4x-utility C++ library
+license: GPL-3.0-or-later ; GNU General Public License v3.0 or later.
