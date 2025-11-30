@@ -167,7 +167,13 @@ namespace iw4x
           // reorder them anyway.
           //
           string s (is.str ());
-          size_t n (count (s.begin (), s.end (), '\n'));
+          size_t n (0);
+          {
+            istringstream counter (s);
+            for (string l; getline (counter, l); )
+              if (!l.empty () && l[0] == '\n')
+                ++n;
+          }
 
           // Note that we decompose the output into separate stream operations
           // to highlight the logical pieces.
