@@ -2,6 +2,7 @@
 
 #include <array>
 #include <iostream>
+#include <sstream>
 
 extern "C"
 {
@@ -86,6 +87,8 @@ namespace iw4x
       }
     }
 
+    // TODO: Candidate for relocation to libiw4x-utility.
+    //
     void
     setup_cpptrace ()
     {
@@ -120,21 +123,112 @@ namespace iw4x
         // these symbols can appear anywhere in the decorated names. That is,
         // word boundaries cannot be relied on.
         //
-        return (s.find ("terminate_handler")   != string::npos ||
-                s.find ("__terminate")         != string::npos ||
-                s.find ("std::terminate")      != string::npos ||
-                s.find ("__cxa_rethrow")       != string::npos ||
-                s.find ("__tmainCRTStartup")   != string::npos ||
-                s.find ("WinMainCRTStartup")   != string::npos ||
-                s.find ("BaseThreadInitThunk") != string::npos ||
-                n.find ("ntdll.dll")           != string::npos);
+        return (s.find ("terminate_handler")   != string::npos  ||
+                s.find ("__terminate")         != string::npos  ||
+                s.find ("std::terminate")      != string::npos  ||
+                s.find ("__cxa_rethrow")       != string::npos  ||
+                s.find ("__tmainCRTStartup")   != string::npos  ||
+                s.find ("WinMainCRTStartup")   != string::npos  ||
+                s.find ("BaseThreadInitThunk") != string::npos  ||
+                n.find ("ntdll.dll")           != string::npos  ||
+                n.find ("mingw/include")       != string::npos) == false;
       });
 
-      // Register cpptrace terminate handler.
+      // Register a custom terminate handler that reverses stack trace output.
       //
-      // https://github.com/jeremy-rifkin/cpptrace#terminate-handling
+      // Traditional stack traces print with frame #0 at the top (most recent
+      // call) and frame #N at the bottom (entry point). This is problematic for
+      // terminal output where the bottom of the screen is what the user sees
+      // first. In practice, the most relevant diagnostic information (the
+      // immediate point of failure) ends up off-screen.
       //
-      register_terminate_handler ();
+      // Let's move against the grain and address this by reversing the
+      // presentation order: The entry point appears first, and the failure
+      // point last. Note that frame numbers are adjusted accordingly
+      // (decreasing from N to 0)
+      //
+      set_terminate ([] ()
+      {
+        auto print_reversed_terminate_trace ([] (stacktrace st)
+        {
+          istringstream is;
+          ostringstream os;
+
+          // Reverse frame order.
+          //
+          reverse (st.frames.begin (), st.frames.end ());
+
+          // Delegate formatting to cpptrace configured global formatter.
+          //
+          get_default_formatter ().print (os, st, true), is.str (os.str ());
+
+          // We could call the above "good enough" and live with wrong frame
+          // numbers. It's minor, but since we like being pedantic, let's
+          // reorder them anyway.
+          //
+          string s (is.str ());
+          size_t n (count (s.begin (), s.end (), '\n'));
+
+          // Note that we decompose the output into separate stream operations
+          // to highlight the logical pieces.
+          //
+          for (string l; getline (is, l); )
+          {
+            bool frame = !l.empty () && l[0] == '#';
+
+            cerr << (frame ? "#" : "")
+                 << (frame ? to_string (--n) : "")
+                 << (frame ? l.substr (l.find (' ')) : l) << endl;
+          }
+        });
+
+        // Here we mirror cpptrace's terminate handler but route all stack-trace
+        // reporting through print_reversed_terminate_trace.
+        //
+        try
+        {
+          exception_ptr ep (current_exception ());
+
+          if (ep == nullptr)
+          {
+            cerr << "terminate called without an active exception" << endl;
+            print_reversed_terminate_trace (generate_trace (1));
+          }
+          else
+          {
+            rethrow_exception (ep);
+          }
+        }
+
+        catch (cpptrace::exception& e)
+        {
+          cerr << "terminate called after throwing an instance of '"
+               << demangle (typeid (e).name ()) << "': " << e.message ()
+               << endl;
+
+          print_reversed_terminate_trace (e.trace ());
+        }
+
+        catch (const std::exception& e)
+        {
+          cerr << "terminate called after throwing an instance of '"
+               << demangle (typeid (e).name ()) << "': " << e.what () << endl;
+
+          print_reversed_terminate_trace (generate_trace (1));
+        }
+
+        catch (...)
+        {
+          cerr << "terminate called after throwing an instance of '"
+               << "<unknown>" << "'" << endl;
+
+          print_reversed_terminate_trace (generate_trace (1));
+        }
+
+        // https://github.com/adishavit/Terminators/blob/master/README.md
+        //
+        abort ();
+      });
     }
   }
 
