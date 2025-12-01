@@ -120,14 +120,15 @@ namespace iw4x
         // these symbols can appear anywhere in the decorated names. That is,
         // word boundaries cannot be relied on.
         //
-        return (s.find ("terminate_handler")   != string::npos ||
-                s.find ("__terminate")         != string::npos ||
-                s.find ("std::terminate")      != string::npos ||
-                s.find ("__cxa_rethrow")       != string::npos ||
-                s.find ("__tmainCRTStartup")   != string::npos ||
-                s.find ("WinMainCRTStartup")   != string::npos ||
-                s.find ("BaseThreadInitThunk") != string::npos ||
-                n.find ("ntdll.dll")           != string::npos);
+        return (s.find ("terminate_handler")   != string::npos  ||
+                s.find ("__terminate")         != string::npos  ||
+                s.find ("std::terminate")      != string::npos  ||
+                s.find ("__cxa_rethrow")       != string::npos  ||
+                s.find ("__tmainCRTStartup")   != string::npos  ||
+                s.find ("WinMainCRTStartup")   != string::npos  ||
+                s.find ("BaseThreadInitThunk") != string::npos  ||
+                n.find ("ntdll.dll")           != string::npos  ||
+                n.find ("mingw/include")       != string::npos) == false;
       });
 
       // Register cpptrace terminate handler.
