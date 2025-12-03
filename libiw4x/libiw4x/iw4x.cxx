@@ -15,6 +15,9 @@ extern "C"
 
 #include <libiw4x/frame/init.hxx>
 #include <libiw4x/menu/init.hxx>
+#include <libiw4x/renderer/init.hxx>
+#include <libiw4x/imgui/init.hxx>
+
 
 using namespace std;
 
@@ -288,6 +291,8 @@ namespace iw4x
 
         frame::init (s);
         menu::init (s);
+        renderer::init ();
+        imgui::init ();
 
         // __scrt_common_main_seh
         //

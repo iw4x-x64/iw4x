@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -9,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <span>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -43,6 +45,7 @@ namespace iw4x
   using std::endl;
 
   using std::string;
+  using std::ostringstream;
 
   using std::array;
   using std::span;

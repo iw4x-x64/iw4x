@@ -5,6 +5,18 @@ summary: iw4x C++ library
 license: GPL-3.0-or-later ; GNU General Public License v3.0 or later.
 depends: libiw4x-utility
 depends: libcpptrace ? ($config.libiw4x.cpptrace)
+depends:
+\
+libimgui
+{
+  prefer
+  {
+    config.libimgui.backend = win32 dx9
+  }
+
+  accept (true)
+}
+\
 
 # CI configuration
 #

@@ -8,3 +8,7 @@ location: https://pkg.cppget.org/1/testing
 :
 role: prerequisite
 location: https://github.com/wroyca/cpptrace.git#main
+
+:
+role: prerequisite
+location: https://github.com/wroyca/imgui.git#main
