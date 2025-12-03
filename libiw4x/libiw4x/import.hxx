@@ -1,6 +1,7 @@
 #pragma once
 
-#include <libiw4x/utility/utility-win32.hxx>
+#include <libiw4x/types.hxx>
+#include <libiw4x/utility.hxx>
 
 #include <libiw4x/export.hxx>
 
@@ -4613,4 +4614,46 @@ namespace iw4x
     XAssetEntry entry;
     XAssetEntryPoolEntry* next;
   };
+
+    // Game internal symbols
+  //
+
+  using  NET_Config_t = int (*) (int);
+  inline NET_Config_t NET_Config = reinterpret_cast<NET_Config_t> (0x1402A9510);
+
+  using  NET_GetDvars_t = bool (*) ();
+  inline NET_GetDvars_t NET_GetDvars = reinterpret_cast<NET_GetDvars_t> (0x1402A9900);
+
+  using  NET_SendPacket_t = bool (*) (size_t, char*, int*);
+  inline NET_SendPacket_t NET_SendPacket = reinterpret_cast<NET_SendPacket_t> (0x1402AA1B0);
+
+  using  NET_StringToAdr_t = bool (*) (const char*, netadr_t*);
+  inline NET_StringToAdr_t NET_StringToAdr = reinterpret_cast<NET_StringToAdr_t> (0x14020A260);
+
+  using  NET_OutOfBandPrint_t = void (*) (int, netadr_t*, const char*, ...);
+  inline NET_OutOfBandPrint_t NET_OutOfBandPrint = reinterpret_cast<NET_OutOfBandPrint_t> (0x140209FC0);
+
+  using  Dvar_RegisterString_t = long long (*) (long long, long long, int, long long);
+  inline Dvar_RegisterString_t Dvar_RegisterString = reinterpret_cast<Dvar_RegisterString_t> (0x140288590);
+
+  using  Dvar_RegisterInt_t = long long (*) (long long, int, int, int, int, long long);
+  inline Dvar_RegisterInt_t Dvar_RegisterInt = reinterpret_cast<Dvar_RegisterInt_t> (0x1402881F0);
+
+  using  Dvar_FindVar_t = dvar_t* (*) (const char* name);
+  inline Dvar_FindVar_t Dvar_FindVar = reinterpret_cast<Dvar_FindVar_t> (0x140287170);
+
+  using  Dvar_SetString_t = long long (*) (long long, long long);
+  inline Dvar_SetString_t Dvar_SetString = reinterpret_cast<Dvar_SetString_t> (0x140289A80);
+
+  using  Dvar_SetFromStringByName_t = dvar_t* (*) (const char*, const char*);
+  inline Dvar_SetFromStringByName_t Dvar_SetFromStringByName = reinterpret_cast<Dvar_SetFromStringByName_t> (0x140289570);
+
+  using  Dvar_RegisterBool_t = long long (*) (long long, long long, int, long long);
+  inline Dvar_RegisterBool_t Dvar_RegisterBool = reinterpret_cast<Dvar_RegisterBool_t> (0x140287CE0);
+
+  using  DB_FindXAssetHeader_t = XAssetHeader (*) (XAssetType type, const char* name);
+  inline DB_FindXAssetHeader_t DB_FindXAssetHeader = reinterpret_cast<DB_FindXAssetHeader_t> (0x140129220);
+
+  using  Com_Frame_Try_Block_Function_t = void (*) ();
+  inline Com_Frame_Try_Block_Function_t Com_Frame_Try_Block_Function = reinterpret_cast<Com_Frame_Try_Block_Function_t> (0x1401F9930);
 }

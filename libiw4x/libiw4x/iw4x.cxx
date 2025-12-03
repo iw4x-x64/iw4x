@@ -13,6 +13,9 @@ extern "C"
 #  include <cpptrace/formatting.hpp>
 #endif
 
+#include <libiw4x/frame/init.hxx>
+#include <libiw4x/menu/init.hxx>
+
 using namespace std;
 
 namespace iw4x
@@ -280,6 +283,11 @@ namespace iw4x
           {
             memset (reinterpret_cast<void*> (address), value, size);
           });
+
+        scheduler s;
+
+        frame::init (s);
+        menu::init (s);
 
         // __scrt_common_main_seh
         //

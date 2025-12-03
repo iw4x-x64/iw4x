@@ -2,6 +2,7 @@ intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
 import intf_libs += libzydis%lib{zydis}
+import intf_libs += xxhash%lib{xxhash}
 
 lib{iw4x-utility}: {hxx ixx txx cxx}{** -{utility-win32 config version}} \
                    {hxx            }{                   config version } \
