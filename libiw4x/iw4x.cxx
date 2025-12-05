@@ -13,6 +13,9 @@ extern "C"
 #  include <cpptrace/formatting.hpp>
 #endif
 
+#include <libiw4x/frame/init.hxx>
+#include <libiw4x/menu/init.hxx>
+
 using namespace std;
 
 namespace iw4x
@@ -110,7 +113,7 @@ namespace iw4x
       //
       const_cast<formatter&> (get_default_formatter ())
         .addresses (address_mode::object)
-        .colors (colors_mode::always) // automatic mode fails under Wine
+        .colors (colors_mode::automatic) // automatic mode fails under Wine
         .snippets (true)
         .symbols (symbol_mode::pretty)
         .filter ([] (const stacktrace_frame& frame)
@@ -130,8 +133,11 @@ namespace iw4x
                 s.find ("__tmainCRTStartup")   != string::npos  ||
                 s.find ("WinMainCRTStartup")   != string::npos  ||
                 s.find ("BaseThreadInitThunk") != string::npos  ||
+                s.find ("boost::asio::detail") != string::npos  ||
+                s.find ("boost::asio::io_context") != string::npos ||
                 n.find ("ntdll.dll")           != string::npos  ||
-                n.find ("mingw/include")       != string::npos) == false;
+                n.find ("mingw/include")       != string::npos  ||
+                n.find ("libboost-asio")       != string::npos) == false;
       });
 
       // Register cpptrace terminate handler.
@@ -280,6 +286,10 @@ namespace iw4x
           {
             memset (reinterpret_cast<void*> (address), value, size);
           });
+
+        scheduler s;
+        frame::init (s);
+        menu::init (s);
 
         // __scrt_common_main_seh
         //
