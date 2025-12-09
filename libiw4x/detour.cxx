@@ -93,7 +93,9 @@ namespace iw4x
         //
         if (ta + offset <= upper_bound)
         {
-          void* frame (VirtualAlloc (reinterpret_cast<void*> (ta + offset),
+          uintptr_t page ((ta + offset + ag - 1) & ~(ag - 1));
+
+          void* frame (VirtualAlloc (reinterpret_cast<void*> (page),
                                       as,
                                       MEM_COMMIT | MEM_RESERVE,
                                       PAGE_EXECUTE_READWRITE));
@@ -117,7 +119,9 @@ namespace iw4x
         //
         if (offset > 0 && ta >= offset && ta - offset >= lower_bound)
         {
-          void* frame (VirtualAlloc (reinterpret_cast<void*> (ta - offset),
+          uintptr_t page ((ta - offset) & ~(ag - 1));
+
+          void* frame (VirtualAlloc (reinterpret_cast<void*> (page),
                                       as,
                                       MEM_COMMIT | MEM_RESERVE,
                                       PAGE_EXECUTE_READWRITE));
