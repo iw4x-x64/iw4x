@@ -18,6 +18,7 @@ extern "C"
 
 #include <libiw4x/frame/frame.hxx>
 #include <libiw4x/menu/menu.hxx>
+#include <libiw4x/windows/windows.hxx>
 
 using namespace std;
 using namespace std::filesystem;
@@ -118,7 +119,12 @@ namespace iw4x
       //
       const_cast<formatter&> (get_default_formatter ())
         .addresses (address_mode::object)
-        .colors (colors_mode::automatic) // automatic mode fails under Wine
+        // Note that color may not survive terminal line wrapping, since the
+        // terminal handles the wrap itself. Also, the automatic mode tends to
+        // misbehave under Wine, presumably because the console detection does
+        // not recognize the attached terminal.
+        //
+        .colors (colors_mode::always)
         .snippets (true)
         .symbols (symbol_mode::pretty)
         .filter ([] (const stacktrace_frame& frame)
@@ -126,27 +132,39 @@ namespace iw4x
         const string& s (frame.symbol);
         const string& n (frame.filename);
 
-        // Filter out known runtime and system frames that are unhelpful in
-        // stack traces. Note that a full substring search is necessary because
-        // these symbols can appear anywhere in the decorated names. That is,
-        // word boundaries cannot be relied on.
+        // Performs an unconstrained search since symbol names are often
+        // decorated and may embed the target substring without any stable
+        // boundary.
         //
-        return (s.find ("terminate_handler")   != string::npos  ||
-                s.find ("__terminate")         != string::npos  ||
-                s.find ("std::terminate")      != string::npos  ||
-                s.find ("__cxa_rethrow")       != string::npos  ||
-                s.find ("__tmainCRTStartup")   != string::npos  ||
-                s.find ("WinMainCRTStartup")   != string::npos  ||
-                s.find ("BaseThreadInitThunk") != string::npos  ||
-                s.find ("boost::asio::detail") != string::npos  ||
-                s.find ("boost::asio::io_context") != string::npos ||
-                n.find ("ntdll.dll")           != string::npos  ||
-                n.find ("mingw/include")       != string::npos  ||
-                n.find ("libboost-asio")       != string::npos) == false;
+        auto
+        contains ([&] (const string& str, const string& substr)
+        {
+          return str.find (substr) != string::npos;
+        });
+
+        // Filter out known runtime and system frames that are unhelpful in
+        // stack traces.
+        //
+        return (contains (s, "terminate_handler")                ||
+                contains (s, "__terminate")                      ||
+                contains (s, "std::terminate")                   ||
+                contains (s, "__cxa_rethrow")                    ||
+                contains (s, "__tmainCRTStartup")                ||
+                contains (s, "WinMainCRTStartup")                ||
+                contains (s, "BaseThreadInitThunk")              ||
+                contains (s, "dispatch_exception")               ||
+                contains (s, "call_seh_handlers")                ||
+                contains (s, "call_unhandled_exception_handler") ||
+                contains (s, "call_unhandled_exception_filter")  ||
+                contains (s, "UnhandledExceptionFilter")         ||
+                contains (s, "boost::asio::detail")              ||
+                contains (s, "boost::asio::io_context")          ||
+                contains (n, "ntdll.dll")                        ||
+                contains (n, "kernelbase")                       ||
+                contains (n, "mingw/include")                    ||
+                contains (n, "libboost-asio"))                   == false;
       });
 
-      // Register a custom terminate handler that reverses stack trace output.
-      //
       // Traditional stack traces print with frame #0 at the top (most recent
       // call) and frame #N at the bottom (entry point). This is problematic for
       // terminal output where the bottom of the screen is what the user sees
@@ -158,86 +176,82 @@ namespace iw4x
       // point last. Note that frame numbers are adjusted accordingly
       // (decreasing from N to 0)
       //
+      static auto
+      print_reversed_terminate_trace ([] (stacktrace st)
+      {
+        istringstream is;
+        ostringstream os;
+
+        // Reverse frame order.
+        //
+        reverse (st.frames.begin (), st.frames.end ());
+
+        // Delegate formatting to cpptrace configured global formatter.
+        //
+        get_default_formatter ().print (os, st, true), is.str (os.str ());
+
+        // We could call the above "good enough" and live with wrong frame
+        // numbers. It's minor, but since we like being pedantic, let's
+        // reorder them anyway.
+        //
+        string s (is.str ());
+        size_t n (0);
+        {
+          istringstream counter (s);
+          for (string l; getline (counter, l);)
+            if (!l.empty () && l [0] == '#')
+              ++n;
+        }
+
+        // Note that we decompose the output into separate stream operations
+        // to highlight the logical pieces.
+        //
+        for (string l; getline (is, l);)
+        {
+          // Skip cpptrace's header line.
+          //
+          if (l.find ("Stack trace") != string::npos)
+            continue;
+
+          bool frame = !l.empty () && l [0] == '#';
+
+          cerr << (frame ? "#" : "")
+               << (frame ? to_string (--n) : "")
+               << (frame ? l.substr (l.find (' ')) : l) << endl;
+        }
+      });
+
+      // Register a custom terminate handler that reverses stack trace output.
+      // Note that we mirror cpptrace's terminate handler but route all
+      // stack-trace reporting through print_reversed_terminate_trace.
+      //
       set_terminate ([] ()
       {
-        auto print_reversed_terminate_trace ([] (stacktrace st)
-        {
-          istringstream is;
-          ostringstream os;
-
-          // Reverse frame order.
-          //
-          reverse (st.frames.begin (), st.frames.end ());
-
-          // Delegate formatting to cpptrace configured global formatter.
-          //
-          get_default_formatter ().print (os, st, true), is.str (os.str ());
-
-          // We could call the above "good enough" and live with wrong frame
-          // numbers. It's minor, but since we like being pedantic, let's
-          // reorder them anyway.
-          //
-          string s (is.str ());
-          size_t n (0);
-          {
-            istringstream counter (s);
-            for (string l; getline (counter, l); )
-              if (!l.empty () && l[0] == '\n')
-                ++n;
-          }
-
-          // Note that we decompose the output into separate stream operations
-          // to highlight the logical pieces.
-          //
-          for (string l; getline (is, l); )
-          {
-            bool frame = !l.empty () && l[0] == '#';
-
-            cerr << (frame ? "#" : "")
-                 << (frame ? to_string (--n) : "")
-                 << (frame ? l.substr (l.find (' ')) : l) << endl;
-          }
-        });
-
-        // Here we mirror cpptrace's terminate handler but route all stack-trace
-        // reporting through print_reversed_terminate_trace.
-        //
         try
         {
-          exception_ptr ep (current_exception ());
-
-          if (ep == nullptr)
+          if (current_exception () == nullptr)
           {
             cerr << "terminate called without an active exception" << endl;
             print_reversed_terminate_trace (generate_trace (1));
           }
           else
           {
-            rethrow_exception (ep);
+            rethrow_exception (current_exception ());
           }
         }
-
         catch (cpptrace::exception& e)
         {
-          cerr << "terminate called after throwing an instance of '"
-               << demangle (typeid (e).name ()) << "': " << e.message ()
-               << endl;
+          cerr << "terminate called after throwing an instance of "
+               << demangle (typeid (e).name ())
+               << "  what ():  " << e.message () << endl;
 
           print_reversed_terminate_trace (e.trace ());
         }
-
         catch (const std::exception& e)
         {
-          cerr << "terminate called after throwing an instance of '"
-               << demangle (typeid (e).name ()) << "': " << e.what () << endl;
-
-          print_reversed_terminate_trace (generate_trace (1));
-        }
-
-        catch (...)
-        {
-          cerr << "terminate called after throwing an instance of '"
-               << "<unknown>" << "'" << endl;
+          cerr << "terminate called after throwing an instance of "
+               << demangle (typeid (e).name ())
+               << "  what ():  " << e.what () << endl;
 
           print_reversed_terminate_trace (generate_trace (1));
         }
@@ -245,6 +259,20 @@ namespace iw4x
         // https://github.com/adishavit/Terminators/blob/master/README.md
         //
         abort ();
+      });
+
+      // Register Windows unhandled exception filter to catch exceptions that
+      // escape the normal C++ exception handling mechanism.
+      //
+      SetUnhandledExceptionFilter ([] (EXCEPTION_POINTERS* ep) -> LONG
+      {
+        auto ea ((uintptr_t) (ep->ExceptionRecord->ExceptionAddress));
+
+        cerr << "unhandled Windows exception at 0x" << hex << ea << dec << endl;
+
+        print_reversed_terminate_trace (generate_trace (1));
+
+        return EXCEPTION_EXECUTE_HANDLER;
       });
     }
 #endif
