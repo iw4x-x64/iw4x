@@ -1,11 +1,14 @@
 using in
 
+define cli: file
+
+cli{*}: extension = cli
+
 cxx.internal.scope = current
 
 cxx.std = latest
 
 using cxx
-using cli
 
 hxx{*}: extension = hxx
 ixx{*}: extension = ixx
@@ -40,6 +43,7 @@ test.target = $cxx.target
 # builds.
 #
 config [bool] config.libiw4x.develop ?= false
+develop = $config.libiw4x.develop # shorthand
 
 # Configuration variable.
 #
