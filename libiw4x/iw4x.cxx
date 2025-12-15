@@ -171,112 +171,19 @@ namespace iw4x
                 contains (n, "libboost-asio"))                   == false;
       });
 
-      // Traditional stack traces print with frame #0 at the top (most recent
-      // call) and frame #N at the bottom (entry point). This is problematic for
-      // terminal output where the bottom of the screen is what the user sees
-      // first. In practice, the most relevant diagnostic information (the
-      // immediate point of failure) ends up off-screen.
+      // Register cpptrace terminate handler.
       //
-      // Let's move against the grain and address this by reversing the
-      // presentation order: The entry point appears first, and the failure
-      // point last. Note that frame numbers are adjusted accordingly
-      // (decreasing from N to 0)
-      //
-      static auto
-      print_reversed_terminate_trace ([] (stacktrace st)
-      {
-        istringstream is;
-        ostringstream os;
-
-        // Reverse frame order.
-        //
-        reverse (st.frames.begin (), st.frames.end ());
-
-        // Delegate formatting to cpptrace configured global formatter.
-        //
-        get_default_formatter ().print (os, st, true), is.str (os.str ());
-
-        // We could call the above "good enough" and live with wrong frame
-        // numbers. It's minor, but since we like being pedantic, let's
-        // reorder them anyway.
-        //
-        string s (is.str ());
-        size_t n (0);
-        {
-          istringstream counter (s);
-          for (string l; getline (counter, l);)
-            if (!l.empty () && l [0] == '#')
-              ++n;
-        }
-
-        // Note that we decompose the output into separate stream operations
-        // to highlight the logical pieces.
-        //
-        for (string l; getline (is, l);)
-        {
-          // Skip cpptrace's header line.
-          //
-          if (l.find ("Stack trace") != string::npos)
-            continue;
-
-          bool frame = !l.empty () && l [0] == '#';
-
-          cerr << (frame ? "#" : "")
-               << (frame ? to_string (--n) : "")
-               << (frame ? l.substr (l.find (' ')) : l) << endl;
-        }
-      });
-
-      // Register a custom terminate handler that reverses stack trace output.
-      // Note that we mirror cpptrace's terminate handler but route all
-      // stack-trace reporting through print_reversed_terminate_trace.
-      //
-      set_terminate ([] ()
-      {
-        try
-        {
-          if (current_exception () == nullptr)
-          {
-            cerr << "terminate called without an active exception" << endl;
-            print_reversed_terminate_trace (generate_trace (1));
-          }
-          else
-          {
-            rethrow_exception (current_exception ());
-          }
-        }
-        catch (cpptrace::exception& e)
-        {
-          cerr << "terminate called after throwing an instance of "
-               << demangle (typeid (e).name ())
-               << "  what ():  " << e.message () << endl;
-
-          print_reversed_terminate_trace (e.trace ());
-        }
-        catch (const std::exception& e)
-        {
-          cerr << "terminate called after throwing an instance of "
-               << demangle (typeid (e).name ())
-               << "  what ():  " << e.what () << endl;
-
-          print_reversed_terminate_trace (generate_trace (1));
-        }
-
-        // https://github.com/adishavit/Terminators/blob/master/README.md
-        //
-        abort ();
-      });
+      register_terminate_handler ();
 
       // Register Windows unhandled exception filter to catch exceptions that
       // escape the normal C++ exception handling mechanism.
       //
       SetUnhandledExceptionFilter ([] (EXCEPTION_POINTERS* ep) -> LONG
       {
-        auto ea ((uintptr_t) (ep->ExceptionRecord->ExceptionAddress));
+        cerr << "unhandled Windows exception at 0x" << hex
+             << ep->ExceptionRecord->ExceptionAddress << dec << endl;
 
-        cerr << "unhandled Windows exception at 0x" << hex << ea << dec << endl;
-
-        print_reversed_terminate_trace (generate_trace (1));
+        generate_trace (1);
 
         return EXCEPTION_EXECUTE_HANDLER;
       });
