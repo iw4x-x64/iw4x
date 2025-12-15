@@ -1,9 +1,10 @@
 #include <libiw4x/imgui/init.hxx>
-#include <libiw4x/renderer/init.hxx>
 
 #include <libimgui/imgui.h>
 #include <libimgui/backends/imgui_impl_dx9.h>
 #include <libimgui/backends/imgui_impl_win32.h>
+
+#include <libiw4x/renderer/init.hxx>
 
 // Forward declare the ImGui Win32 message handler. See imgui_impl_win32.h for
 // context.

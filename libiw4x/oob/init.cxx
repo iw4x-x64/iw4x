@@ -1,12 +1,5 @@
 #include <libiw4x/oob/init.hxx>
 
-#include <array>
-#include <cstdint>
-#include <iostream>
-#include <stdexcept>
-#include <unordered_map>
-#include <utility>
-
 namespace iw4x
 {
   namespace oob

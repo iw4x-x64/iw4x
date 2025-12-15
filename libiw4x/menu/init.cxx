@@ -1,10 +1,5 @@
 #include <libiw4x/menu/init.hxx>
 
-#include <string>
-#include <vector>
-
-using namespace std;
-
 namespace iw4x
 {
   namespace menu
@@ -37,15 +32,14 @@ namespace iw4x
             return *d;
         }
 
-        // At this point, either the menu has no items, or the requested item
-        // was not found. It's unclear whether a menu is allowed to exist
-        // without items (and if so, why find_item would be called), but let's
-        // handle both cases explicitly.
+        // At this point, we failed to locate the item, which mean that either
+        // the menu had no items, or the requested item was not found. It's
+        // unclear whether a menu is allowed to exist without items (and if so,
+        // why find_item would be called), but let's handle both cases
+        // explicitly.
         //
-        if (m.itemCount == 0)
-          throw runtime_error ("item count is empty");
-
-        throw runtime_error ("unable to find item: " + name);
+        throw m.itemCount == 0 ? runtime_error ("item count is empty") :
+                                 runtime_error ("unable to find item: " + name);
       }
 
       MenuEventHandler*

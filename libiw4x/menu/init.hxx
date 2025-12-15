@@ -1,6 +1,5 @@
 #pragma once
 
-#include <libiw4x/scheduler.hxx>
 #include <libiw4x/import.hxx>
 #include <libiw4x/export.hxx>
 

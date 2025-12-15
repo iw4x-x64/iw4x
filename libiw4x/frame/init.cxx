@@ -1,11 +1,5 @@
 #include <libiw4x/frame/init.hxx>
 
-#include <iostream>
-
-#include <libiw4x/detour.hxx>
-
-using namespace std;
-
 namespace iw4x
 {
   namespace frame

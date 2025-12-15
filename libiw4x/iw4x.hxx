@@ -1,4 +1,4 @@
-#include <libiw4x/windows/windows.hxx>
+#include <libiw4x/utility-win32.hxx>
 
 #include <libiw4x/export.hxx>
 

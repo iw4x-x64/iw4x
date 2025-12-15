@@ -23,8 +23,6 @@ extern "C"
 #include <libiw4x/oob/init.hxx>
 #include <libiw4x/renderer/init.hxx>
 
-#include <libiw4x/windows/windows.hxx>
-
 using namespace std;
 using namespace std::filesystem;
 using namespace boost::dll;
