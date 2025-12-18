@@ -7,6 +7,7 @@
 
 #include <libiw4x/frame/init.hxx>
 #include <libiw4x/imgui/init.hxx>
+#include <libiw4x/iw/init.hxx>
 #include <libiw4x/menu/init.hxx>
 #include <libiw4x/network/init.hxx>
 #include <libiw4x/oob/init.hxx>
@@ -337,6 +338,7 @@ namespace iw4x
         imgui    ::init ();
         network  ::init (s);
         oob      ::init ();
+        iw       ::init ();
 
         // __scrt_common_main_seh
         //
