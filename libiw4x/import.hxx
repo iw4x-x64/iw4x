@@ -747,7 +747,6 @@ namespace iw4x
   struct dvar_t
   {
     const char* name;
-    const char* description;
     unsigned int flags;
     dvarType type;
     bool modified;
