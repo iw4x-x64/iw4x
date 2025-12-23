@@ -11,36 +11,29 @@ namespace iw4x
     void
     init ()
     {
-      ([] (void (*_) (uintptr_t, int, size_t))
-        {
-          // Disable Sys_CheckCrashOrRerun in WinMain.
-          //
-          _ (0x1402A92B3, 0x90, 13);
+      // Disable Sys_CheckCrashOrRerun in WinMain.
+      //
+      memwrite (0x1402A92B3, 0x90, 13);
 
-          // Skip com_safemode checks in Com_Init.
-          //
-          // com_safemode is only ever set to true by Sys_CheckCrashOrRerun.
-          //
-          _ (0x1401FAC87, 0x90, 7);
-          _ (0x1401FAC8E, 0xEB, 1);
-        })
-      ([] (uintptr_t address, int value, size_t size)
-        {
-          memwrite (reinterpret_cast<void*> (address), value, size);
-        });
+      // Skip com_safemode checks in Com_Init.
+      //
+      // com_safemode is only ever set to true by Sys_CheckCrashOrRerun.
+      //
+      memwrite (0x1401FAC87, 0x90, 7);
+      memwrite (0x1401FAC8E, 0xEB, 1);
+
+      // Patch Content_DoWeHaveContentPack to always return true
+      //
+      memwrite (0x1402864F0, "\xB0\x01\xC3");
+
+      // Patch Live_IsSignedIn to always return true.
+      //
+      memwrite (0x1402A6E40, "\x33\xC0\xFF\xC0\xC3");
 
       // Patch s_cpuCount initialization to use hardware concurrency in
       // Sys_InitMainThread. (Dynamic)
       //
       *(uint32_t*) 0x14020DD06 = thread::hardware_concurrency ();
-
-      // Patch Content_DoWeHaveContentPack
-      //
-      memcpy ((void*) 0x1402864F0, "\xB0\x01\xC3", 3);
-
-      // Patch Live_IsSignedIn to always return true.
-      //
-      memcpy ((void*) 0x1402A6E40, "\x33\xC0\xFF\xC0\xC3", 5);
 
       // live.hxx
       //
