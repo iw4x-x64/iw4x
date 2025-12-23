@@ -79,6 +79,44 @@ namespace iw4x
           ios::sync_with_stdio ();
       }
     }
+
+    // Parse command line arguments.
+    //
+    // Note that when running in a context without an active output stream,
+    // any attempts to write to 'cout' through our handlers will have no
+    // effect.
+    //
+    // Note also that in cases where a handler is intended to terminate the
+    // program after printing (e.g., --help or --version), it will still
+    // exit as intended. That is, no special handling is performed for the
+    // absence of an active stream.
+    //
+    void
+    parse_cmdline ()
+    {
+      options opt (__argc, __argv);
+
+      // Handle --version.
+      //
+      if (opt.version ())
+      {
+        cout << "IW4x " << LIBIW4X_VERSION_ID << "\n";
+
+        exit (0);
+      }
+
+      // Handle --help.
+      //
+      if (opt.help ())
+      {
+        cout << "usage: iw4x [options] <names>" << "\n"
+             << "options:" << "\n";
+
+        opt.print_usage (cout);
+
+        exit (0);
+      }
+    }
   }
 
   extern "C"
@@ -106,39 +144,9 @@ namespace iw4x
         //
         attach_console ();
 
-        // Parse command line arguments.
+        // Parse command line arguments, if any.
         //
-        // Note that when running in a context without an active output stream,
-        // any attempts to write to 'cout' through our handlers will have no
-        // effect.
-        //
-        // Note also that in cases where a handler is intended to terminate the
-        // program after printing (e.g., --help or --version), it will still
-        // exit as intended. That is, no special handling is performed for the
-        // absence of an active stream.
-        //
-        options opt (__argc, __argv);
-
-        // Handle --version.
-        //
-        if (opt.version ())
-        {
-          cout << "IW4x " << LIBIW4X_VERSION_ID << "\n";
-
-          exit (0);
-        }
-
-        // Handle --help.
-        //
-        if (opt.help ())
-        {
-          cout << "usage: iw4x [options] <names>" << "\n"
-               << "options:"                      << "\n";
-
-          opt.print_usage (cout);
-
-          exit (0);
-        }
+        parse_cmdline ();
 
         // Under normal circumstances, a DLL is unloaded via FreeLibrary once
         // its reference count reaches zero. This is acceptable for auxiliary
