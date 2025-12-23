@@ -1,8 +1,8 @@
-#include <libiw4x/iw/live-win.hxx>
+#include <libiw4x/client/live-win.hxx>
 
 namespace iw4x
 {
-  namespace iw
+  namespace client
   {
     bool
     live_start_signin_any (unsigned int)
@@ -13,7 +13,8 @@ namespace iw4x
     LIBIW4X_SYMEXPORT const char*
     live_get_local_client_name (int)
     {
-      return "Hello";
+      const char* n (getenv("USERNAME"));
+      return n ? n : "UnnamedPlayer";
     }
   }
 }

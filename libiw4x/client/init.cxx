@@ -1,12 +1,12 @@
-#include <libiw4x/iw/init.hxx>
+#include <libiw4x/client/init.hxx>
 
-#include <libiw4x/iw/live.hxx>
-#include <libiw4x/iw/live-gdk.hxx>
-#include <libiw4x/iw/live-win.hxx>
+#include <libiw4x/client/live.hxx>
+#include <libiw4x/client/live-gdk.hxx>
+#include <libiw4x/client/live-win.hxx>
 
 namespace iw4x
 {
-  namespace iw
+  namespace client
   {
     void
     init ()

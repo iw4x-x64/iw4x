@@ -5,7 +5,7 @@
 
 namespace iw4x
 {
-  namespace iw
+  namespace client
   {
     LIBIW4X_SYMEXPORT bool
     live_require_user_to_play_online (int controllerIndex);

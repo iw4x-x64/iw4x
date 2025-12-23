@@ -5,7 +5,7 @@
 
 namespace iw4x
 {
-  namespace iw
+  namespace client
   {
     LIBIW4X_SYMEXPORT void
     init ();

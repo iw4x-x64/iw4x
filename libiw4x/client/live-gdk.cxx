@@ -1,8 +1,8 @@
-#include <libiw4x/iw/live-win.hxx>
+#include <libiw4x/client/live-win.hxx>
 
 namespace iw4x
 {
-  namespace iw
+  namespace client
   {
     bool
     live_xsync_with_cloud (int)

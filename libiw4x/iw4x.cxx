@@ -2,7 +2,7 @@
 
 #include <libiw4x/frame/init.hxx>
 #include <libiw4x/menu/init.hxx>
-#include <libiw4x/iw/init.hxx>
+#include <libiw4x/client/init.hxx>
 
 #include <libiw4x/version.hxx>
 #include <libiw4x/iw4x-options.hxx>
@@ -256,7 +256,7 @@ namespace iw4x
 
         frame::init (s);
         menu::init (s);
-        iw::init ();
+        client::init ();
 
         // __scrt_common_main_seh
         //
