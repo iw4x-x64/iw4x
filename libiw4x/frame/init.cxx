@@ -6,8 +6,6 @@ namespace iw4x
   {
     namespace
     {
-      scheduler* sched (nullptr);
-
       void
       com_frame_try_block_function ()
       {
@@ -37,11 +35,9 @@ namespace iw4x
     }
 
     void
-    init (scheduler& s)
+    init ()
     {
-      sched = &s;
-
-      s.create ("com_frame");
+      sched->create ("com_frame");
 
       detour (Com_Frame_Try_Block_Function, &com_frame_try_block_function);
     }

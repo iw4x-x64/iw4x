@@ -69,11 +69,11 @@ namespace iw4x
     }
 
     void
-    init (scheduler& s)
+    init ()
     {
       // Must runs only after the menu graph is actually there to work with.
       //
-      s.post ("com_frame", [] ()
+      sched->post ("com_frame", [] ()
       {
         ([] (auto&& action, auto&& expression)
           {

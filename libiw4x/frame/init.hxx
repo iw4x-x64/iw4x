@@ -8,6 +8,6 @@ namespace iw4x
   namespace frame
   {
     LIBIW4X_SYMEXPORT void
-    init (scheduler&);
+    init ();
   }
 }

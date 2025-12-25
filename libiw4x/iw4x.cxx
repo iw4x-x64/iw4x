@@ -208,9 +208,10 @@ namespace iw4x
           });
 
         scheduler s;
+        sched = &s;
 
-        frame::init (s);
-        menu::init (s);
+        frame::init ();
+        menu::init ();
         client::init ();
 
         // __scrt_common_main_seh

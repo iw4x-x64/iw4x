@@ -8,6 +8,6 @@ namespace iw4x
   namespace menu
   {
     LIBIW4X_SYMEXPORT void
-    init (scheduler&);
+    init ();
   }
 }
