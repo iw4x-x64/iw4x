@@ -73,7 +73,7 @@ namespace iw4x
     {
       // Must runs only after the menu graph is actually there to work with.
       //
-      sched->post ("com_frame", [] ()
+      ctx.sched.post ("com_frame", [] ()
       {
         ([] (auto&& action, auto&& expression)
           {

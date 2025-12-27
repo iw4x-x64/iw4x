@@ -72,8 +72,4 @@ namespace iw4x
     auto i (strands.find (n));
     return i != strands.end () ? &i->second : nullptr;
   }
-
-  // Process-wide scheduler instance. See header for details.
-  //
-  scheduler* sched (nullptr);
 }

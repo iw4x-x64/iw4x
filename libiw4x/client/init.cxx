@@ -54,7 +54,7 @@ namespace iw4x
 
       // scheduler
       //
-      sched->create ("com_frame");
+      ctx.sched.create ("com_frame");
 
       // common.hxx
       //
