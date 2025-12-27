@@ -123,12 +123,12 @@ namespace iw4x
         // lead to unpredictable relative path resolution.
         //
         // The strategy here is to explicitly realign the working directory to
-        // the DLL's own location. That is, we effectively makes all relative
-        // file operations resolve against the module's directory when the
-        // process is hosted or started indirectly.
+        // the executable's own location. That is, we effectively makes all
+        // relative file operations resolve against the executable's directory
+        // when the process is hosted or started indirectly.
         //
         char p [MAX_PATH];
-        if (GetModuleFileName (m, p, MAX_PATH))
+        if (GetModuleFileName (nullptr, p, MAX_PATH))
         {
           string s (p);
           size_t i (s.rfind ('\\'));
