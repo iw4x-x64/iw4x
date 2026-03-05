@@ -30,6 +30,24 @@ namespace iw4x
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
 
+        // Under normal circumstances, a DLL is unloaded via FreeLibrary once
+        // its reference count reaches zero. This is acceptable for auxiliary
+        // libraries but unsuitable for modules like ours, which embed deeply
+        // into the host process.
+        //
+        HMODULE m;
+        if (!GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN |
+                                  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                                reinterpret_cast<LPCTSTR> (DllMain),
+                                &m))
+        {
+          MessageBox (nullptr,
+                      "unable to mark module as permanent",
+                      "error",
+                      MB_ICONERROR);
+          exit (1);
+        }
+
         // __scrt_common_main_seh
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
