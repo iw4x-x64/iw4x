@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 
 using namespace std;
 
@@ -43,6 +44,54 @@ namespace iw4x
         {
           MessageBox (nullptr,
                       "unable to mark module as permanent",
+                      "error",
+                      MB_ICONERROR);
+          exit (1);
+        }
+
+        // By default, the process inherits its working directory from whatever
+        // environment or launcher invoked it, which may vary across setups and
+        // lead to unpredictable relative path resolution.
+        //
+        // The strategy here is to explicitly realign the working directory to
+        // the executable's own location. That is, we effectively makes all
+        // relative file operations resolve against the executable's directory
+        // when the process is hosted or started indirectly.
+        //
+        // Note that we don't pass NULL to GetModuleFileName() as it incorrectly
+        // returns the path of the process executable. That is, if we are
+        // running under a generic launcher or wrapper, that would be the
+        // launcher's path, not ours, and any relative path resolution based on
+        // it would be incorrect (i.e., we would look for configuration files
+        // next to the launcher).
+        //
+        // Instead, we use the __ImageBase MSVC linker pseudo-variable. Its
+        // address coincides with the module's base address (HMODULE) which in
+        // turns can be used to query IW4x path regardless of who the hosting
+        // process is.
+        //
+        char p [MAX_PATH];
+        if (GetModuleFileName (reinterpret_cast<HMODULE> (&__ImageBase),
+                               p,
+                               MAX_PATH))
+        {
+          string s (p);
+          size_t i (s.rfind ('\\'));
+
+          if (i == string::npos ||
+              !SetCurrentDirectory (s.substr (0, i).c_str ()))
+          {
+            MessageBox (nullptr,
+                        "unable to set module current directory",
+                        "error",
+                        MB_ICONERROR);
+            exit (1);
+          }
+        }
+        else
+        {
+          MessageBox (nullptr,
+                      "unable to retrieve module location",
                       "error",
                       MB_ICONERROR);
           exit (1);

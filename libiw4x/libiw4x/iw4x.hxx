@@ -5,18 +5,22 @@
 #  ifndef NOMINMAX
 #    define NOMINMAX
 #    include <windows.h>
+#    include <psapi.h>
 #    undef NOMINMAX
 #  else
 #    include <windows.h>
+#    include <psapi.h>
 #  endif
 #  undef WIN32_LEAN_AND_MEAN
 #else
 #  ifndef NOMINMAX
 #    define NOMINMAX
 #    include <windows.h>
+#    include <psapi.h>
 #    undef NOMINMAX
 #  else
 #    include <windows.h>
+#    include <psapi.h>
 #  endif
 #endif
 
@@ -45,3 +49,7 @@ namespace iw4x
     DllMain (HINSTANCE, DWORD reason, LPVOID);
   }
 }
+
+// Linker pseudo-variable.
+//
+extern "C" IMAGE_DOS_HEADER __ImageBase;
