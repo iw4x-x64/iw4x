@@ -4637,4 +4637,9 @@ namespace iw4x
     xasset_entry entry;
     xasset_entry_pool_entry* next;
   };
+
+  // Internal symbols
+  //
+  using  Com_Frame_Try_Block_Function_t = int64_t (*) ();
+  inline Com_Frame_Try_Block_Function_t Com_Frame_Try_Block_Function = reinterpret_cast<Com_Frame_Try_Block_Function_t> (0x1401F9930);
 }

@@ -8,6 +8,8 @@
 #include <libiw4x/memory.hxx>
 #include <libiw4x/logger.hxx>
 
+#include <libiw4x/mod/mod-scheduler.hxx>
+
 using namespace std;
 
 namespace iw4x
@@ -250,6 +252,10 @@ namespace iw4x
         memwrite (0x1403B30DC, 0x00, 9);                                        // ^
         memwrite (0x1402864F0, "\xB0\x01\xC3");                                 // Suppress Content_DoWeHaveContentPack
         memwrite (0x1400F85F8, 0x90, 26);                                       // Suppress CL_Live_BaseGameLicenseCheck
+
+        // Built-in modules.
+        //
+        mod::scheduler_module ();
 
         // __scrt_common_main_seh
         //
