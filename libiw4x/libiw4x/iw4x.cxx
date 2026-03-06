@@ -9,6 +9,7 @@
 #include <libiw4x/logger.hxx>
 
 #include <libiw4x/mod/mod-scheduler.hxx>
+#include <libiw4x/mod/mod-ui.hxx>
 
 using namespace std;
 
@@ -256,6 +257,7 @@ namespace iw4x
         // Built-in modules.
         //
         mod::scheduler_module ();
+        mod::ui_module ();
 
         // __scrt_common_main_seh
         //
