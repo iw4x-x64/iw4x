@@ -229,4 +229,14 @@ namespace iw4x
     //
     active_.clear ();
   }
+
+  namespace scheduler
+  {
+    boost::asio::io_context&
+    get_io_context ()
+    {
+      static boost::asio::io_context ioc;
+      return ioc;
+    }
+  }
 }

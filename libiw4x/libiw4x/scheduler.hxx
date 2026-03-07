@@ -2,8 +2,14 @@
 
 #include <atomic>
 #include <functional>
+#include <memory>
 #include <thread>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_signal.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 
 #include <libiw4x/export.hxx>
@@ -78,6 +84,91 @@ namespace iw4x
 
     scheduled_entry (const scheduled_entry&) = delete;
     scheduled_entry& operator= (const scheduled_entry&) = delete;
+  };
+
+  // Exclusive entry.
+  //
+  // Often we have a situation where an event triggers an asynchronous
+  // operation. If the event fires again before the first operation completes,
+  // we don't want to spawn a second concurrent operation. Instead, we just want
+  // to drop the new request.
+  //
+  // Basically, this is a deduplicating wrapper around boost::asio::co_spawn.
+  // The idea is to keep track of whether the coroutine is currently executing
+  // and ignore subsequent spawn requests until it finishes.
+  //
+  // Note that we also need to handle the lifetime correctly. The coroutine
+  // might temporarily outlive the object that spawned it. So we keep the
+  // control block in a shared state. We also tie into the cancellation
+  // mechanism so that if this entry object is destroyed, we signal the
+  // in-flight operation to abort.
+  //
+  // Keep in mind that this is exclusively (pun intended) meant to be used with
+  // our asio coroutine bridge.
+  //
+  class exclusive_entry
+  {
+  public:
+    exclusive_entry ()
+      : s_ (std::make_shared<state> ()) {}
+
+    ~exclusive_entry ()
+    {
+      s_->sig.emit (boost::asio::cancellation_type::all);
+    }
+
+    exclusive_entry (const exclusive_entry&) = delete;
+    exclusive_entry& operator = (const exclusive_entry&) = delete;
+
+    template <typename E, typename F>
+    void
+    spawn (E&& ex, F&& f)
+    {
+      bool e (false);
+
+      if (!s_->run.compare_exchange_strong (e, true, std::memory_order_acquire))
+        return;
+
+      auto w (
+        [s (s_), f (std::forward<F> (f))] () -> boost::asio::awaitable<void>
+      {
+        struct grd
+        {
+          std::shared_ptr<state> s;
+
+          ~grd ()
+          {
+            s->run.store (false, std::memory_order_release);
+          }
+        } g (s);
+
+        co_await f ();
+      });
+
+      boost::asio::co_spawn (
+        std::forward<E> (ex),
+        std::move (w),
+        boost::asio::bind_cancellation_slot (s_->sig.slot (),
+                                             boost::asio::detached));
+    }
+
+    bool
+    is_running () const
+    {
+      return s_->run.load (std::memory_order_acquire);
+    }
+
+  private:
+    struct state
+    {
+      std::atomic<bool> run;
+      boost::asio::cancellation_signal sig;
+
+      state ()
+        : run (false) {}
+    };
+
+    std::shared_ptr<state> s_;
   };
 
   // Logical scheduler.
@@ -281,17 +372,17 @@ namespace iw4x
       }
 
       boost::asio::io_context&
-      context () const noexcept { return *ioc; }
-
-      void on_work_started () const noexcept {}
-      void on_work_finished () const noexcept {}
+      context () const noexcept
+      {
+        return *ioc;
+      }
 
       template <typename F, typename A>
       void
       dispatch (F f, const A&) const
       {
-        post (Domain {},
-              [func = std::move (f)] () mutable
+        iw4x::scheduler::post (Domain {},
+                               [func = std::move (f)] () mutable
         {
           func ();
         }, asynchronous {});
@@ -301,8 +392,8 @@ namespace iw4x
       void
       post (F f, const A&) const
       {
-        post (Domain {},
-              [func = std::move (f)] () mutable
+        iw4x::scheduler::post (Domain {},
+                               [func = std::move (f)] () mutable
         {
           func ();
         }, asynchronous {});
@@ -312,8 +403,8 @@ namespace iw4x
       void
       defer (F f, const A&) const
       {
-        post (Domain {},
-              [func = std::move (f)] () mutable
+        iw4x::scheduler::post (Domain {},
+                               [func = std::move (f)] () mutable
         {
           func ();
         }, asynchronous {});
@@ -323,12 +414,61 @@ namespace iw4x
       void
       execute (F f) const
       {
-        post (Domain {},
-              [func = std::move (f)] () mutable
+        iw4x::scheduler::post (Domain {},
+                               [func = std::move (f)] () mutable
         {
           func ();
         }, asynchronous {});
       }
+
+      boost::asio::io_context&
+        query(boost::asio::execution::context_t)
+      const noexcept { return *ioc; }
+
+      asio_executor
+        require(boost::asio::execution::blocking_t::never_t)
+      const noexcept { return *this; }
+
+      asio_executor
+        require(boost::asio::execution::blocking_t::possibly_t)
+      const noexcept { return *this; }
+
+      asio_executor
+        require(boost::asio::execution::outstanding_work_t::tracked_t)
+      const noexcept { return *this; }
+
+      asio_executor
+        require(boost::asio::execution::outstanding_work_t::untracked_t)
+      const noexcept { return *this; }
+
+      asio_executor
+        require(boost::asio::execution::relationship_t::fork_t)
+      const noexcept { return *this; }
+
+      asio_executor
+        require(boost::asio::execution::relationship_t::continuation_t)
+      const noexcept { return *this; }
     };
+
+    LIBIW4X_SYMEXPORT boost::asio::io_context&
+    get_io_context ();
+
+    template <typename F>
+    void
+    spawn (F&& f)
+    {
+      static exclusive_entry entry;
+      entry.spawn (
+        scheduler::asio_executor<com_frame_domain> (get_io_context ()),
+        std::forward<F> (f));
+    }
+
+    template <typename Executor, typename F>
+    void
+    spawn (Executor&& ex, F&& f)
+    {
+      static exclusive_entry entry;
+      entry.spawn (std::forward<Executor> (ex), std::forward<F> (f));
+    }
   }
 }
