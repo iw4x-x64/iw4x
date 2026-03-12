@@ -340,6 +340,30 @@ namespace iw4x
       get<Domain> ().post (static_cast<task&&> (work), mode);
     }
 
+    // For a long time, type-erased wrappers like std::function rigidly required
+    // that whatever you put into them could be copied. If you write a lambda
+    // that captures a std::unique_ptr or a std::promise by value (meaning you
+    // std::move it into the lambda's capture block), that lambda inherently
+    // becomes move-only. If you try to pass that move-only lambda to an older
+    // std::function, the compiler will greet you with a massive wall of
+    // template instantiation errors about deleted copy constructors.
+    //
+    // Task queues and thread pools usually rely on type-erased wrappers to
+    // store pending work. So, how do we put a move-only task into a queue that
+    // stubbornly insists on copyable tasks?
+    //
+    // The workaround is to "box" the move-only task on the heap and hold it via
+    // a std::shared_ptr. Copying the shared_ptr just bumps a reference count,
+    // that is, it never attempts to copy the underlying move-only task. This
+    // makes the outer wrapper copy-constructible, satisfying the queue's type
+    // requirements, while keeping the inner task safely un-copied.
+
+    // As mentioned above, we move the non-copyable callable onto the heap and
+    // hold it via a shared_ptr. The resulting wrapper becomes trivially
+    // copyable, sharing the same underlying state. Whoever actually invokes
+    // operator() will just execute the stored callable. Obviously, this
+    // introduces a heap allocation, so we use it only as a last resort.
+    //
     template <typename F>
     struct shared_task_wrapper
     {
@@ -352,16 +376,34 @@ namespace iw4x
       }
     };
 
+    // Package a task so that the executor queue will accept it without
+    // complaining about deleted copy constructors.
+    //
+    // The overarching goal here is to avoid the heap allocation of
+    // shared_task_wrapper whenever the language and library allow us to.
+    //
     template <typename F>
     auto
     wrap_task (F&& f)
     {
 #if __cpp_lib_move_only_function
+      // If the standard library natively supports move-only type erasure
+      // (meaning C++23 and std::move_only_function are available), the
+      // target queue can handle move-only objects directly. We just return
+      // a standard lambda, capturing the callable by value (moving it in).
+      //
       return [func = std::forward<F> (f)] () mutable
       {
         func ();
       };
 #else
+      // We are on an older standard, which means the executor queue is likely
+      // backed by something like std::function that requires copyability.
+      //
+      // If the callable happens to be copy-constructible on its own, we are
+      // fine. We can just capture it in a regular lambda and return it,
+      // completely avoiding any extra heap allocations.
+      //
       if constexpr (std::is_copy_constructible_v<std::decay_t<F>>)
       {
         return [func = std::forward<F> (f)] () mutable
@@ -371,8 +413,16 @@ namespace iw4x
       }
       else
       {
-        return shared_task_wrapper<std::decay_t<F>> {
-          std::make_shared<std::decay_t<F>> (std::forward<F> (f))};
+        // Here we hit the worst-case scenario. We are stuck on an older
+        // standard, the API demands a copyable object, but the callable is
+        // move-only. We have no choice but to pay the price and allocate
+        // the state on the heap using our shared_task_wrapper. This makes
+        // the resulting object copyable by simply copying the shared_ptr.
+        //
+        return shared_task_wrapper<std::decay_t<F>>
+        {
+          std::make_shared<std::decay_t<F>> (std::forward<F> (f))
+        };
       }
 #endif
     }
