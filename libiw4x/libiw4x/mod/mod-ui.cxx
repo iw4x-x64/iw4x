@@ -87,7 +87,7 @@ namespace iw4x
     ui_module::
     ui_module ()
     {
-      scheduler::post (com_frame_domain {}, []
+      scheduler::post (com_frame_domain, []
       {
         set_action
         (

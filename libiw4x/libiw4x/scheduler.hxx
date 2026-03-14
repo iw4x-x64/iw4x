@@ -17,24 +17,56 @@
 
 namespace iw4x
 {
-  // Domain tag.
+  // Domain.
   //
-  struct com_frame_domain {};
+  struct com_frame_domain_t {};
+  inline constexpr com_frame_domain_t com_frame_domain;
 
-  // Callable type alias.
+  // Time.
   //
-#if __cpp_lib_move_only_function
-    using task = std::move_only_function<void ()>;
-#else
-    using task = std::function<void ()>;
-#endif
+  using steady_clock = std::chrono::steady_clock;
+  using duration = steady_clock::duration;
+  using time_point = steady_clock::time_point;
+
+  // Callable type aliases.
+  //
+  using task = std::move_only_function<void ()>;
+  using predicate = std::move_only_function<bool ()>;
+
+  // Constraints.
+  //
+  template <typename T>
+  concept SchedulerDomain = std::is_empty_v<T> && std::is_trivial_v<T>;
+
+  template <typename P>
+  concept SchedulerPredicate = std::is_invocable_r_v<bool, P&>;
+
+  template <typename F>
+  concept SchedulerTask = std::is_invocable_v<std::decay_t<F>>;
+
+  template <typename E>
+  concept SchedulerExecutor = std::copy_constructible<std::decay_t<E>> &&
+                              std::equality_comparable<std::decay_t<E>> &&
+    requires (const std::decay_t<E>& e, void (*f) ())
+  {
+    e.execute (f);
+  };
+
+  template <typename A>
+  concept SchedulerAllocator = std::copy_constructible<std::decay_t<A>> &&
+    requires (std::decay_t<A>& a, std::size_t n)
+  {
+      typename std::allocator_traits<std::decay_t<A>>::value_type;
+      a.allocate (n);
+  };
 
   // Scheduling modes.
   //
-  // Each mode is a distinct type encoding the scheduling behavior at compile
-  // time. The idea is to avoid runtime flags in the hot path. Instead, overload
-  // resolution selects the correct enqueue mechanism (for example, atomic queue
-  // versus local vector) based on the mode type alone.
+  // Each mode is a distinct type that encodes the scheduling behavior at
+  // compile time. The idea here is to avoid runtime flags in the hot path.
+  // Instead, overload resolution naturally selects the correct enqueue
+  // mechanism (like an atomic queue versus a local vector) based purely on
+  // the mode type.
   //
 
   // Execute the task on the next tick of the target scheduler.
@@ -48,8 +80,8 @@ namespace iw4x
   // cross-thread ingress queue.
   //
   // This mode must be used when posting from a thread that does not own the
-  // target scheduler (foreign thread). It is also safe, though less efficient,
-  // to use from the owning thread.
+  // target scheduler (a foreign thread). It is also safe, though slightly
+  // less efficient, to use from the owning thread.
   //
   struct asynchronous_t {};
   inline constexpr asynchronous_t asynchronous;
@@ -62,130 +94,218 @@ namespace iw4x
   struct repeat_every_tick_t {};
   inline constexpr repeat_every_tick_t repeat_every_tick;
 
+  // Execute on every tick until the wall-clock deadline is reached.
+  //
+  // The deadline is computed as now() + span at the moment of posting. Once
+  // the deadline passes, the task is discarded after its final execution.
+  //
+  struct repeat_until_time
+  {
+    duration span;
+
+    explicit
+    repeat_until_time (duration time_limit)
+      : span (time_limit)
+    {
+      assert (span > duration::zero ());
+    }
+  };
+
+  // Execute on every tick until the predicate returns true.
+  //
+  // The predicate is evaluated after each execution. When it first returns
+  // true, the task is discarded.
+  //
+  struct repeat_until_predicate
+  {
+    predicate condition;
+
+    explicit
+    repeat_until_predicate (SchedulerPredicate auto predicate_function)
+      : condition (std::move (predicate_function))
+    {
+      assert (condition);
+    }
+  };
+
+  // Execute once after the specified delay has elapsed.
+  //
+  // The activation time is computed as now() + delay at the moment of
+  // posting. On each tick before the activation time, the task is deferred
+  // without executing.
+  //
+  struct execute_after_duration
+  {
+    duration delay;
+
+    explicit
+    execute_after_duration (duration time_delay)
+      : delay (time_delay)
+    {
+      assert (delay > duration::zero ());
+    }
+  };
+
   // Scheduled entry.
   //
-  // Internal representation of a unit of work. All scheduling modes are
-  // unified into this single layout to allow the pending and active queues
-  // to store heterogeneous entries.
+  // This is the internal representation of a unit of work. We unify all
+  // scheduling modes into this single layout. That allows the pending and
+  // active queues to store heterogeneous entries without much fuss.
   //
-  // Note that this type is rarely interacted with directly. It is populated
-  // implicitly by logical_scheduler::post().
+  // Note that you will rarely interact with this type directly. It gets
+  // populated implicitly by logical_scheduler::post().
   //
   struct scheduled_entry
   {
+    // The actual work to execute when this entry becomes ready.
+    //
     task work;
+
+    // Condition callable for the repeat_until_predicate mode. It is empty
+    // for all other modes.
+    //
+    predicate condition;
+
+    // Time point used by time-dependent modes.
+    //
+    // For execute_after_duration this is the activation time (the earliest
+    // tick at which the task fires). For repeat_until_time this is the
+    // deadline (the last tick at which the task fires). It is unused by
+    // other modes.
+    //
+    time_point when;
 
     // Retention policy.
     //
-    // Called after execution to determine whether this entry should survive to
-    // the next tick.
+    // We call this after execution to determine whether this entry should
+    // survive to the next tick.
     //
-    bool (*retain) (scheduled_entry&) = nullptr;
+    bool (*retain) (scheduled_entry&);
 
-    scheduled_entry () = default;
+    // Readiness gate.
+    //
+    // We call this before execution to determine whether this entry should
+    // fire on the current tick. A null pointer simply means the task is
+    // always ready. When readiness returns false, the entry is deferred to
+    // the next tick without executing.
+    //
+    bool (*ready) (const scheduled_entry&);
+
+    scheduled_entry ()
+      : when (), retain (nullptr), ready (nullptr) {}
+
     scheduled_entry (scheduled_entry&&) = default;
-    scheduled_entry& operator= (scheduled_entry&&) = default;
+    scheduled_entry& operator = (scheduled_entry&&) = default;
 
     scheduled_entry (const scheduled_entry&) = delete;
-    scheduled_entry& operator= (const scheduled_entry&) = delete;
+    scheduled_entry& operator = (const scheduled_entry&) = delete;
   };
 
   // Exclusive entry.
   //
-  // Often we have a situation where an event triggers an asynchronous
+  // Often we encounter a situation where an event triggers an asynchronous
   // operation. If the event fires again before the first operation completes,
-  // we don't want to spawn a second concurrent operation. Instead, we just want
-  // to drop the new request.
+  // we generally do not want to spawn a second concurrent operation. Instead,
+  // we just want to drop the new request on the floor.
   //
-  // Basically, this is a deduplicating wrapper around boost::asio::co_spawn.
-  // The idea is to keep track of whether the coroutine is currently executing
-  // and ignore subsequent spawn requests until it finishes.
+  // Essentially, this acts as a deduplicating wrapper around
+  // boost::asio::co_spawn. The idea is to keep track of whether the coroutine
+  // is currently executing and simply ignore subsequent spawn requests until
+  // it finishes.
   //
-  // Note that we also need to handle the lifetime correctly. The coroutine
-  // might temporarily outlive the object that spawned it. So we keep the
-  // control block in a shared state. We also tie into the cancellation
-  // mechanism so that if this entry object is destroyed, we signal the
-  // in-flight operation to abort.
+  // Note that we also need to handle the lifetime correctly here. The
+  // coroutine might temporarily outlive the object that spawned it. So we
+  // keep the control block in a shared state. We also tie into the
+  // cancellation mechanism so that if this entry object is destroyed, we
+  // signal the in-flight operation to abort.
   //
-  // Keep in mind that this is exclusively (pun intended) meant to be used with
-  // our asio coroutine bridge.
+  // Keep in mind that this is exclusively (pun intended) meant to be used
+  // with our asio coroutine bridge.
   //
   class exclusive_entry
   {
   public:
     exclusive_entry ()
-      : s_ (std::make_shared<state> ()) {}
+      : shared_state_ (std::make_shared<state> ()) {}
 
     ~exclusive_entry ()
     {
-      s_->sig.emit (boost::asio::cancellation_type::all);
+      shared_state_->cancellation_sig.emit (
+        boost::asio::cancellation_type::all);
     }
 
     exclusive_entry (const exclusive_entry&) = delete;
     exclusive_entry& operator = (const exclusive_entry&) = delete;
 
-    template <typename E, typename F>
     void
-    spawn (E&& ex, F&& f)
+    spawn (SchedulerExecutor auto&& executor_instance,
+           SchedulerTask     auto&& work_function)
     {
       bool e (false);
 
-      if (!s_->run.compare_exchange_strong (e, true, std::memory_order_acquire))
+      if (!shared_state_->is_running
+             .compare_exchange_strong (e, true, std::memory_order_acquire))
         return;
 
-      auto w (
-        [s (s_), f (std::forward<F> (f))] () -> boost::asio::awaitable<void>
+      auto w ([s (shared_state_),
+               fn (std::forward<decltype (work_function)> (
+                 work_function))] () mutable -> boost::asio::awaitable<void>
       {
         struct grd
         {
           std::shared_ptr<state> s;
 
+          explicit grd (std::shared_ptr<state> st)
+            : s (std::move (st)) {}
+
           ~grd ()
           {
-            s->run.store (false, std::memory_order_release);
+            s->is_running.store (false, std::memory_order_release);
           }
         } g (s);
 
-        co_await f ();
+        co_await fn ();
       });
 
       boost::asio::co_spawn (
-        std::forward<E> (ex),
+        std::forward<decltype (executor_instance)> (executor_instance),
         std::move (w),
-        boost::asio::bind_cancellation_slot (s_->sig.slot (),
-                                             boost::asio::detached));
+        boost::asio::bind_cancellation_slot (
+          shared_state_->cancellation_sig.slot (),
+          boost::asio::detached));
     }
 
     bool
     is_running () const
     {
-      return s_->run.load (std::memory_order_acquire);
+      return shared_state_->is_running.load (std::memory_order_acquire);
     }
 
   private:
     struct state
     {
-      std::atomic<bool> run;
-      boost::asio::cancellation_signal sig;
+      std::atomic<bool> is_running;
+      boost::asio::cancellation_signal cancellation_sig;
 
       state ()
-        : run (false) {}
+        : is_running (false) {}
     };
 
-    std::shared_ptr<state> s_;
+    std::shared_ptr<state> shared_state_;
   };
 
   // Logical scheduler.
   //
-  // An independently tickable scheduler bound to a single owning thread.
+  // This is an independently tickable scheduler bound to a single owning
+  // thread.
   //
-  // The model is explicit ownership. Each scheduler maintains its own task
-  // queues and must be ticked explicitly by its owner. There are no implicit
-  // wakeups or cross-scheduler interactions, except via the asynchronous
-  // ingress queue.
+  // The model here is explicit ownership. Each scheduler maintains its own
+  // task queues and must be ticked explicitly by its owner. There are no
+  // implicit wakeups or cross-scheduler interactions, except via the
+  // asynchronous ingress queue.
   //
-  // Note that ownership is claimed implicitly on the first call to tick() and
-  // asserted on every subsequent call.
+  // Note that ownership is claimed implicitly on the first call to tick()
+  // and asserted on every subsequent call.
   //
   class LIBIW4X_SYMEXPORT logical_scheduler
   {
@@ -194,28 +314,28 @@ namespace iw4x
     ~logical_scheduler ();
 
     logical_scheduler (const logical_scheduler&) = delete;
-    logical_scheduler& operator= (const logical_scheduler&) = delete;
+    logical_scheduler& operator = (const logical_scheduler&) = delete;
 
     logical_scheduler (logical_scheduler&&) = delete;
-    logical_scheduler& operator= (logical_scheduler&&) = delete;
+    logical_scheduler& operator = (logical_scheduler&&) = delete;
 
     // Posting.
     //
 
     // Schedule work to be executed on the next tick.
     //
-    // This overload bypasses the atomic queue and appends directly to the local
-    // pending buffer. It must only be called from the thread that owns this
-    // scheduler.
+    // This overload bypasses the atomic queue and appends directly to the
+    // local pending buffer. It must only be called from the thread that
+    // owns this scheduler.
     //
     void
     post (task work);
 
     // Schedule work from a foreign thread.
     //
-    // Pushes the task onto the atomic ingress queue. This is safe to call from
-    // any thread. The task will be drained into the local pending queue at the
-    // start of the next tick.
+    // This pushes the task onto the atomic ingress queue. This is safe to
+    // call from any thread. The task will be drained into the local pending
+    // queue at the start of the next tick.
     //
     void
     post (task work, asynchronous_t mode);
@@ -225,15 +345,30 @@ namespace iw4x
     void
     post (task work, repeat_every_tick_t mode);
 
+    // Schedule work to be executed on every tick until a specified deadline.
+    //
+    void
+    post (task work, repeat_until_time mode);
+
+    // Schedule work to be executed on every tick until a condition is met.
+    //
+    void
+    post (task work, repeat_until_predicate mode);
+
+    // Schedule work to be deferred until a specified duration has elapsed.
+    //
+    void
+    post (task work, execute_after_duration mode);
+
     // Execution.
     //
 
     // Execute all pending tasks for the current tick.
     //
-    // The execution logic is double-buffered. We first drain the async ingress
-    // queue into the pending buffer and then swap the pending buffer with the
-    // active one. Once swapped, we iterate over the active snapshot
-    // front-to-back.
+    // The execution logic is double-buffered. We first drain the async
+    // ingress queue into the pending buffer and then swap the pending buffer
+    // with the active one. Once swapped, we iterate over the active
+    // snapshot front-to-back.
     //
     void
     tick ();
@@ -244,10 +379,10 @@ namespace iw4x
 
     // Node for the lock-free MPSC ingress queue.
     //
-    // Each cross-thread post allocates one node. The owning thread then adopts
-    // and deallocates these nodes during the drain phase. Note that this
-    // allocation is isolated to the async path. Same-thread posts remain
-    // allocation-free (amortized).
+    // Each cross-thread post allocates one node. The owning thread then
+    // adopts and deallocates these nodes during the drain phase. Note that
+    // this allocation is isolated to the async path. Same-thread posts
+    // remain allocation-free (amortized).
     //
     struct async_node
     {
@@ -266,8 +401,8 @@ namespace iw4x
 
     // Head of the ingress queue.
     //
-    // Foreign threads push here via CAS. The owning thread consumes the entire
-    // list via atomic exchange.
+    // Foreign threads push here via CAS. The owning thread consumes the
+    // entire list via atomic exchange.
     //
     std::atomic<async_node*> async_head_;
 
@@ -276,9 +411,10 @@ namespace iw4x
 
     // Double-buffered local queues.
     //
-    // The pending_ queue accumulates tasks between ticks and during the current
-    // tick. The active_ queue holds the snapshot being processed. We swap them
-    // at the start of the tick to keep the iteration range stable.
+    // The pending_ queue accumulates tasks between ticks and during the
+    // current tick. The active_ queue holds the snapshot being processed.
+    // We swap them at the start of the tick to keep the iteration range
+    // stable.
     //
     std::vector<scheduled_entry> pending_;
     std::vector<scheduled_entry> active_;
@@ -288,19 +424,21 @@ namespace iw4x
 
     // Identity of the thread that first ticked this scheduler.
     //
-    // Used to detect accidental cross-thread access to non-thread-safe methods.
+    // We use this to detect accidental cross-thread access to
+    // non-thread-safe methods.
     //
     std::jthread::id owner_;
   };
 
   // Global registry.
   //
-  // Provides a unified interface for locating schedulers based on domain tags.
+  // This provides a unified interface for locating schedulers based on
+  // domain tags.
   //
   // We map domain tag types (for example, com_frame_domain) to
-  // logical_scheduler instances using template-parameterized static locals. The
-  // idea is to avoid dynamic map lookup by making each domain resolve to
-  // exactly one scheduler instance at link time.
+  // logical_scheduler instances using template-parameterized static locals.
+  // The idea here is to avoid dynamic map lookup by making each domain
+  // resolve to exactly one scheduler instance at link time.
   //
   namespace scheduler
   {
@@ -308,7 +446,7 @@ namespace iw4x
     //
     // The instance is created on first access.
     //
-    template <typename Domain>
+    template <SchedulerDomain Domain>
     logical_scheduler&
     get ()
     {
@@ -318,240 +456,186 @@ namespace iw4x
 
     // Dispatch a standard task to the domain-specific scheduler.
     //
-    template <typename Domain>
-    void
-    post (Domain, task work)
+    inline void
+    post (SchedulerDomain auto domain_tag, task work)
     {
-      get<Domain> ().post (static_cast<task&&> (work));
+      get<decltype (domain_tag)> ().post (std::move (work));
     }
 
     // Dispatch an asynchronous task to the domain-specific scheduler.
     //
-    template <typename Domain>
-    void
-    post (Domain, task work, asynchronous_t mode)
+    inline void
+    post (SchedulerDomain auto domain_tag, task work, asynchronous_t mode)
     {
-      get<Domain> ().post (static_cast<task&&> (work), mode);
+      get<decltype (domain_tag)> ().post (std::move (work), mode);
     }
 
     // Dispatch a repeating task to the domain-specific scheduler.
     //
-    template <typename Domain>
-    void
-    post (Domain, task work, repeat_every_tick_t mode)
+    inline void
+    post (SchedulerDomain auto domain_tag, task work, repeat_every_tick_t mode)
     {
-      get<Domain> ().post (static_cast<task&&> (work), mode);
+      get<decltype (domain_tag)> ().post (std::move (work), mode);
     }
 
-    // For a long time, type-erased wrappers like std::function rigidly required
-    // that whatever you put into them could be copied. If you write a lambda
-    // that captures a std::unique_ptr or a std::promise by value (meaning you
-    // std::move it into the lambda's capture block), that lambda inherently
-    // becomes move-only. If you try to pass that move-only lambda to an older
-    // std::function, the compiler will greet you with a massive wall of
-    // template instantiation errors about deleted copy constructors.
-    //
-    // Task queues and thread pools usually rely on type-erased wrappers to
-    // store pending work. So, how do we put a move-only task into a queue that
-    // stubbornly insists on copyable tasks?
-    //
-    // The workaround is to "box" the move-only task on the heap and hold it via
-    // a std::shared_ptr. Copying the shared_ptr just bumps a reference count,
-    // that is, it never attempts to copy the underlying move-only task. This
-    // makes the outer wrapper copy-constructible, satisfying the queue's type
-    // requirements, while keeping the inner task safely un-copied.
-
-    // As mentioned above, we move the non-copyable callable onto the heap and
-    // hold it via a shared_ptr. The resulting wrapper becomes trivially
-    // copyable, sharing the same underlying state. Whoever actually invokes
-    // operator() will just execute the stored callable. Obviously, this
-    // introduces a heap allocation, so we use it only as a last resort.
-    //
-    template <typename F>
-    struct shared_task_wrapper
+    inline void
+    post (SchedulerDomain auto domain_tag, task work, repeat_until_time mode)
     {
-      std::shared_ptr<F> f;
+      get<decltype (domain_tag)> ().post (std::move (work), std::move (mode));
+    }
 
-      void
-      operator () ()
-      {
-        (*f) ();
-      }
-    };
-
-    // Package a task so that the executor queue will accept it without
-    // complaining about deleted copy constructors.
-    //
-    // The overarching goal here is to avoid the heap allocation of
-    // shared_task_wrapper whenever the language and library allow us to.
-    //
-    template <typename F>
-    auto
-    wrap_task (F&& f)
+    inline void
+    post (SchedulerDomain auto domain_tag,
+          task work,
+          repeat_until_predicate mode)
     {
-#if __cpp_lib_move_only_function
-      // If the standard library natively supports move-only type erasure
-      // (meaning C++23 and std::move_only_function are available), the
-      // target queue can handle move-only objects directly. We just return
-      // a standard lambda, capturing the callable by value (moving it in).
-      //
-      return [func = std::forward<F> (f)] () mutable
-      {
-        func ();
-      };
-#else
-      // We are on an older standard, which means the executor queue is likely
-      // backed by something like std::function that requires copyability.
-      //
-      // If the callable happens to be copy-constructible on its own, we are
-      // fine. We can just capture it in a regular lambda and return it,
-      // completely avoiding any extra heap allocations.
-      //
-      if constexpr (std::is_copy_constructible_v<std::decay_t<F>>)
-      {
-        return [func = std::forward<F> (f)] () mutable
-        {
-          func ();
-        };
-      }
-      else
-      {
-        // Here we hit the worst-case scenario. We are stuck on an older
-        // standard, the API demands a copyable object, but the callable is
-        // move-only. We have no choice but to pay the price and allocate
-        // the state on the heap using our shared_task_wrapper. This makes
-        // the resulting object copyable by simply copying the shared_ptr.
-        //
-        return shared_task_wrapper<std::decay_t<F>>
-        {
-          std::make_shared<std::decay_t<F>> (std::forward<F> (f))
-        };
-      }
-#endif
+      get<decltype (domain_tag)> ().post (std::move (work), std::move (mode));
+    }
+
+    inline void
+    post (SchedulerDomain auto domain_tag,
+          task work,
+          execute_after_duration mode)
+    {
+      get<decltype (domain_tag)> ().post (std::move (work), std::move (mode));
     }
 
     // Boost.Asio executor adapter.
     //
-    // Bridge logical_scheduler to an execution context for Boost.Asio
-    // operations. Coroutines spawned via co_spawn () with this executor will
+    // This bridges logical_scheduler to an execution context for Boost.Asio
+    // operations. Coroutines spawned via co_spawn() with this executor will
     // automatically resume on the scheduler's tick (main thread) after a
     // background async operation completes.
     //
-    template <typename Domain>
+    template <SchedulerDomain Domain>
     class asio_executor
     {
     public:
-      boost::asio::io_context* ioc;
+      boost::asio::io_context* io_ctx;
 
-      explicit
-      asio_executor (boost::asio::io_context& i) noexcept
-        : ioc (&i) {}
+      explicit asio_executor (boost::asio::io_context& ctx) noexcept
+        : io_ctx (&ctx) {}
 
       asio_executor (const asio_executor&) noexcept = default;
-      asio_executor& operator= (const asio_executor&) noexcept = default;
+      asio_executor& operator = (const asio_executor&) noexcept = default;
 
       bool
-      operator == (const asio_executor& o) const noexcept
+      operator == (const asio_executor& other) const noexcept
       {
-        return ioc == o.ioc;
+        return io_ctx == other.io_ctx;
       }
 
       bool
-      operator != (const asio_executor& o) const noexcept
+      operator != (const asio_executor& other) const noexcept
       {
-        return ioc != o.ioc;
+        return io_ctx != other.io_ctx;
       }
 
       boost::asio::io_context&
       context () const noexcept
       {
-        return *ioc;
+        return *io_ctx;
       }
 
-      template <typename F, typename A>
       void
-      dispatch (F f, const A&) const
+      dispatch (SchedulerTask auto work_function,
+                const SchedulerAllocator auto& allocator_instance) const
       {
-        iw4x::scheduler::post (Domain {},
-                               wrap_task (std::move (f)),
+        iw4x::scheduler::post (Domain (),
+                               std::move (work_function),
                                asynchronous);
       }
 
-      template <typename F, typename A>
       void
-      post (F f, const A&) const
+      post (SchedulerTask auto work_function,
+            const SchedulerAllocator auto& allocator_instance) const
       {
-        iw4x::scheduler::post (Domain {},
-                               wrap_task (std::move (f)),
+        iw4x::scheduler::post (Domain (),
+                               std::move (work_function),
                                asynchronous);
       }
 
-      template <typename F, typename A>
       void
-      defer (F f, const A&) const
+      defer (SchedulerTask auto work_function,
+             const SchedulerAllocator auto& allocator_instance) const
       {
-        iw4x::scheduler::post (Domain {},
-                               wrap_task (std::move (f)),
+        iw4x::scheduler::post (Domain (),
+                               std::move (work_function),
                                asynchronous);
       }
 
-      template <typename F>
       void
-      execute (F f) const
+      execute (SchedulerTask auto work_function) const
       {
-        iw4x::scheduler::post (Domain {},
-                               wrap_task (std::move (f)),
+        iw4x::scheduler::post (Domain (),
+                               std::move (work_function),
                                asynchronous);
       }
 
       boost::asio::io_context&
-        query(boost::asio::execution::context_t)
-      const noexcept { return *ioc; }
+      query (boost::asio::execution::context_t) const noexcept
+      {
+        return *io_ctx;
+      }
 
       asio_executor
-        require(boost::asio::execution::blocking_t::never_t)
-      const noexcept { return *this; }
+      require (boost::asio::execution::blocking_t::never_t) const noexcept
+      {
+        return *this;
+      }
 
       asio_executor
-        require(boost::asio::execution::blocking_t::possibly_t)
-      const noexcept { return *this; }
+      require (boost::asio::execution::blocking_t::possibly_t) const noexcept
+      {
+        return *this;
+      }
 
       asio_executor
-        require(boost::asio::execution::outstanding_work_t::tracked_t)
-      const noexcept { return *this; }
+      require (
+        boost::asio::execution::outstanding_work_t::tracked_t) const noexcept
+      {
+        return *this;
+      }
 
       asio_executor
-        require(boost::asio::execution::outstanding_work_t::untracked_t)
-      const noexcept { return *this; }
+      require (
+        boost::asio::execution::outstanding_work_t::untracked_t) const noexcept
+      {
+        return *this;
+      }
 
       asio_executor
-        require(boost::asio::execution::relationship_t::fork_t)
-      const noexcept { return *this; }
+      require (boost::asio::execution::relationship_t::fork_t) const noexcept
+      {
+        return *this;
+      }
 
       asio_executor
-        require(boost::asio::execution::relationship_t::continuation_t)
-      const noexcept { return *this; }
+      require (
+        boost::asio::execution::relationship_t::continuation_t) const noexcept
+      {
+        return *this;
+      }
     };
 
     LIBIW4X_SYMEXPORT boost::asio::io_context&
     get_io_context ();
 
-    template <typename F>
-    void
-    spawn (F&& f)
+    inline void
+    spawn (SchedulerTask auto&& work_function)
     {
-      static exclusive_entry entry;
-      entry.spawn (
-        scheduler::asio_executor<com_frame_domain> (get_io_context ()),
-        std::forward<F> (f));
+      static exclusive_entry e;
+      e.spawn (scheduler::asio_executor<com_frame_domain_t> (get_io_context ()),
+               std::forward<decltype (work_function)> (work_function));
     }
 
-    template <typename Executor, typename F>
-    void
-    spawn (Executor&& ex, F&& f)
+    inline void
+    spawn (SchedulerExecutor auto&& executor_instance,
+           SchedulerTask auto&& work_function)
     {
-      static exclusive_entry entry;
-      entry.spawn (std::forward<Executor> (ex), std::forward<F> (f));
+      static exclusive_entry e;
+      e.spawn (std::forward<decltype (executor_instance)> (executor_instance),
+               std::forward<decltype (work_function)> (work_function));
     }
   }
 }
