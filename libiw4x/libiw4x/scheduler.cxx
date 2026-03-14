@@ -142,7 +142,7 @@ namespace iw4x
 
     scheduled_entry e;
     e.work = std::move (work);
-    e.when = steady_clock::now () + mode.span;
+    e.when = steady_clock::now () + mode.value;
     e.retain = &retain_until_deadline;
 
     pending_.push_back (std::move (e));
@@ -169,7 +169,7 @@ namespace iw4x
 
     scheduled_entry e;
     e.work = std::move (work);
-    e.when = steady_clock::now () + mode.delay;
+    e.when = steady_clock::now () + mode.value;
     e.ready = &ready_after_activation;
 
     pending_.push_back (std::move (e));

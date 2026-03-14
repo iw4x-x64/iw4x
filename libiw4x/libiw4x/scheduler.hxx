@@ -6,12 +6,7 @@
 #include <thread>
 #include <type_traits>
 
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_signal.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio.hpp>
 
 #include <libiw4x/export.hxx>
 
@@ -27,6 +22,17 @@ namespace iw4x
   using steady_clock = std::chrono::steady_clock;
   using duration = steady_clock::duration;
   using time_point = steady_clock::time_point;
+
+  struct duration_t
+  {
+    duration value;
+
+    explicit duration_t (duration d)
+      : value (d)
+    {
+      assert (value > duration::zero ());
+    }
+  };
 
   // Callable type aliases.
   //
@@ -56,8 +62,8 @@ namespace iw4x
   concept SchedulerAllocator = std::copy_constructible<std::decay_t<A>> &&
     requires (std::decay_t<A>& a, std::size_t n)
   {
-      typename std::allocator_traits<std::decay_t<A>>::value_type;
-      a.allocate (n);
+    typename std::allocator_traits<std::decay_t<A>>::value_type;
+    a.allocate (n);
   };
 
   // Scheduling modes.
@@ -99,16 +105,9 @@ namespace iw4x
   // The deadline is computed as now() + span at the moment of posting. Once
   // the deadline passes, the task is discarded after its final execution.
   //
-  struct repeat_until_time
+  struct repeat_until_time : duration_t
   {
-    duration span;
-
-    explicit
-    repeat_until_time (duration time_limit)
-      : span (time_limit)
-    {
-      assert (span > duration::zero ());
-    }
+    using duration_t::duration_t;
   };
 
   // Execute on every tick until the predicate returns true.
@@ -134,16 +133,9 @@ namespace iw4x
   // posting. On each tick before the activation time, the task is deferred
   // without executing.
   //
-  struct execute_after_duration
+  struct execute_after_duration : duration_t
   {
-    duration delay;
-
-    explicit
-    execute_after_duration (duration time_delay)
-      : delay (time_delay)
-    {
-      assert (delay > duration::zero ());
-    }
+    using duration_t::duration_t;
   };
 
   // Scheduled entry.
