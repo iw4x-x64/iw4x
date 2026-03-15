@@ -68,6 +68,16 @@ namespace iw4x
 
     namespace detail
     {
+      template <typename T, quill::LogLevel L>
+      concept StreamableToAccumulator =
+        requires (stream_accumulator<L>& a,
+                  std::remove_reference_t<T> const& t)
+      {
+        {
+          a << t
+        };
+      };
+
       // Capture the source location for the first operand of operator<<.
       //
       // Because C++ prohibits default arguments on overloaded operators, we
@@ -91,17 +101,24 @@ namespace iw4x
         void (*f_) (stream_accumulator<L>&, void const*);
         quill::SourceLocation l_;
 
-        template <typename T>
         first_arg (
-          T&& t,
+          StreamableToAccumulator<L> auto&& t,
           quill::SourceLocation l = quill::SourceLocation::current ()) noexcept
             : p_ (std::addressof (t)),
               f_ ([] (stream_accumulator<L>& a, void const* p)
           {
-            a << *static_cast<std::remove_reference_t<T> const*> (p);
+            a << *static_cast<std::remove_reference_t<decltype(t)> const*> (p);
           }), l_ (l) {}
       };
     }
+
+    template <typename T, typename Stream>
+    concept Streamable = requires (Stream& stream, T&& value)
+    {
+      {
+        stream << std::forward<T> (value)
+      };
+    };
 
     // Accumulate stream output and flush to the logging backend upon
     // destruction.
@@ -161,17 +178,16 @@ namespace iw4x
         }
       }
 
-      template <typename T>
       stream_accumulator&
-      operator<< (T&& t)
+      operator << (auto&& t) requires Streamable<decltype(t), decltype(s_)>
       {
         if constexpr (L >= min_level)
-          s_ << std::forward<T> (t);
+          s_ << std::forward<decltype(t)> (t);
         return *this;
       }
 
       stream_accumulator&
-      operator<< (std::ostream& (*f)(std::ostream&))
+      operator << (std::ostream& (*f)(std::ostream&))
       {
         if constexpr (L >= min_level)
           f (s_);
