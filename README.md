@@ -11,6 +11,11 @@ IW4x is built using the [build2](https://build2.org/build2-toolchain/doc/build2-
 
 You'll also need a working MinGW++ compiler. If you need help setting it up, you can find installation instructions below:
 
+> [!IMPORTANT]
+> MSVC support is provided **strictly on a best-effort basis**. It is largely untested and compilation is **not guaranteed**.
+>
+> If the build does compile, you may encounter unstable behavior, including hard-to-debug crashes and freezes. Users who choose to proceed with MSVC are encouraged to submit pull requests for any bug fixes they develop.
+
 * [MSYS2](https://www.msys2.org/)
 * [MinGW-w64](https://www.mingw-w64.org/)
 
