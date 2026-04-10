@@ -118,8 +118,9 @@ namespace iw4x
       if (r != DLL_PROCESS_ATTACH)
         return TRUE;
 
-      // DllMain executes while the process loader lock is held, so we defer
-      // initialization to IW4's main thread to avoid ordering violation.
+      // DllMain executes while the loader lock is held, so we defer IW4x
+      // initialization to the process's main thread to avoid ordering
+      // violation.
       //
       uintptr_t t (0x140358EBC);
       uintptr_t s (reinterpret_cast<uintptr_t> (+[] ()
@@ -130,8 +131,8 @@ namespace iw4x
 
         // Under normal circumstances, a DLL is unloaded via FreeLibrary once
         // its reference count reaches zero. This is acceptable for auxiliary
-        // libraries but unsuitable for modules like ours, which embed deeply
-        // into the host process.
+        // libraries but unsuitable for IW4x, which embed deeply into the host
+        // process.
         //
         HMODULE m;
         if (!GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN |
@@ -194,7 +195,7 @@ namespace iw4x
           exit (1);
         }
 
-        // Make process writable and executable.
+        // Mark process as writable and executable.
         //
         // Note that we unprotect the whole image (SizeOfImage) rather than
         // parsing headers to locate its code sections. That is, we want to
@@ -213,7 +214,7 @@ namespace iw4x
                                &o))
           {
             MessageBox (nullptr,
-                        "unable to change module protection",
+                        "unable to change process protection",
                         "error",
                         MB_ICONERROR);
             exit (1);
