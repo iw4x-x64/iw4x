@@ -1,12 +1,5 @@
 #pragma once
 
-#include <thread>
-
-#include <boost/asio/executor_work_guard.hpp>
-#include <boost/asio/io_context.hpp>
-
-#include <libnp/np-client.hxx>
-
 #include <libiw4x/export.hxx>
 
 namespace iw4x
@@ -17,16 +10,6 @@ namespace iw4x
   {
     explicit
     context ();
-
-    // TODO: move to libnp
-    //
-    boost::asio::io_context
-      ioc;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type>
-      work;
-
-    np::master_client np;
-    std::jthread bg;
   };
 
   // `context` is required by a large portion of the detour surface and
