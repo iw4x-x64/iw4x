@@ -7,6 +7,7 @@
 #include <libiw4x/detour.hxx>
 
 #include <libiw4x/demonware/bd-auth.hxx>
+#include <libiw4x/demonware/bd-lobby-service.hxx>
 #include <libiw4x/demonware/bd-platform-log.hxx>
 
 using namespace std;
@@ -26,6 +27,8 @@ namespace iw4x
       auto& uk_xprivileg_cache      (*reinterpret_cast<uint8_t*> (0x141A4A990 + 0xC0 + 2));
       auto& uk_retry_count          (*reinterpret_cast<int32_t*> (0x1416462C4));
       auto& uk_timestamp            (*reinterpret_cast<int32_t*> (0x1416462C8));
+
+      auto& dw_lobby_service        (*reinterpret_cast<void**> (0x1416462D0));
 
       void
       iwnet_frame (int controller)
@@ -107,6 +110,10 @@ namespace iw4x
     demonware_module::
     demonware_module ()
     {
+      // Point the lobby service global at our emulated singleton.
+      //
+      dw_lobby_service = &lobby_service::instance ();
+
       detour (bdLogMessage, &bd_log_message);
       detour (IWNet_Frame,  &iwnet_frame);
     }
