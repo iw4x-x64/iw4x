@@ -19,16 +19,19 @@ namespace iw4x
   {
     namespace
     {
-      auto& uk_state                (*reinterpret_cast<int32_t*> (0x141646308));
-      auto& uk_disable              (*reinterpret_cast<bool*>    (0x1416462E9));
-      auto& uk_session_signin       (*reinterpret_cast<uint8_t*> (0x141A4DA7C));
-      auto& uk_session_signin_state (*reinterpret_cast<int32_t*> (0x141A4dA84));
-      auto& uk_xprivileg_state      (*reinterpret_cast<uint8_t*> (0x141A4A990 + 0xC0));
-      auto& uk_xprivileg_cache      (*reinterpret_cast<uint8_t*> (0x141A4A990 + 0xC0 + 2));
-      auto& uk_retry_count          (*reinterpret_cast<int32_t*> (0x1416462C4));
-      auto& uk_timestamp            (*reinterpret_cast<int32_t*> (0x1416462C8));
+      auto& uk_state                (*reinterpret_cast<int32_t*>  (0x141646308));
+      auto& uk_disable              (*reinterpret_cast<bool*>     (0x1416462E9));
+      auto& uk_session_signin       (*reinterpret_cast<uint8_t*>  (0x141A4DA7C));
+      auto& uk_session_signin_state (*reinterpret_cast<int32_t*>  (0x141A4dA84));
+      auto& uk_xprivileg_state      (*reinterpret_cast<uint8_t*>  (0x141A4A990 + 0xC0));
+      auto& uk_xprivileg_cache      (*reinterpret_cast<uint8_t*>  (0x141A4A990 + 0xC0 + 2));
+      auto& uk_retry_count          (*reinterpret_cast<int32_t*>  (0x1416462C4));
+      auto& uk_timestamp            (*reinterpret_cast<int32_t*>  (0x1416462C8));
 
-      auto& dw_lobby_service        (*reinterpret_cast<void**> (0x1416462D0));
+      auto& dw_lobby_service        (*reinterpret_cast<void**>    (0x1416462D0));
+      auto& dw_socket_router        (*reinterpret_cast<void**>    (0x1416462D8));
+      auto& dw_session              (*reinterpret_cast<void**>    (0x141a4a998));
+      auto& dw_session_context      (*reinterpret_cast<uint64_t*> (0x141a4a9a0));
 
       void
       iwnet_frame (int controller)
@@ -105,14 +108,59 @@ namespace iw4x
         //
         DW_SendPush ();
       }
+
+      struct bd_router
+      {
+        void*   vtable;
+        uint8_t body[0x1F8];
+      };
+
+      static_assert (sizeof (bd_router) == 0x200);
+
+      alignas (16) bd_router router {};
+
+      [[gnu::ms_abi]] int64_t
+      router_stub (void*)
+      {
+        return 0;
+      }
+
+      static constexpr size_t router_vtable_slots (64);
+      void* router_vtable[router_vtable_slots];
+
+      void
+      router_init ()
+      {
+        auto stub (reinterpret_cast<void*> (&router_stub));
+
+        for (auto& e : router_vtable)
+          e = stub;
+
+        router.vtable = router_vtable;
+      }
+
+      // Stub session object to satisfy the session checks.
+      //
+      // The gate at 0x1401B5A50 insists that the session pointer is non-null,
+      // and 0x1401B5BE3 will blindly dereference [ptr + 0x28], which then must
+      // be either null (resulting in a graceful fail) or point to a valid
+      // refcounted object.
+      //
+      alignas (16) uint8_t session_stub[0x30] {};
     }
 
     demonware_module::
     demonware_module ()
     {
-      // Point the lobby service global at our emulated singleton.
-      //
+      router_init ();
+
+      dw_socket_router = &router;
       dw_lobby_service = &lobby_service::instance ();
+
+      uk_state = 8;
+      uk_disable = false;
+      dw_session = session_stub;
+      dw_session_context = auth::ticket ().user_id;
 
       detour (bdLogMessage, &bd_log_message);
       detour (IWNet_Frame,  &iwnet_frame);
