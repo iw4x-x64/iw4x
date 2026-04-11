@@ -4681,4 +4681,7 @@ namespace iw4x
 
   using  bdLogMessage_t = void (*) (int, const char*, const char*, const char*, const char*, int, const char*, ...);
   inline bdLogMessage_t bdLogMessage = reinterpret_cast<bdLogMessage_t> (0x140331F60);
+
+  using  IWNet_Frame_t = void (*) (int);
+  inline IWNet_Frame_t IWNet_Frame (reinterpret_cast<IWNet_Frame_t> (0x14012df70));
 }
