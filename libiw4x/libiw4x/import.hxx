@@ -4683,5 +4683,9 @@ namespace iw4x
   inline bdLogMessage_t bdLogMessage = reinterpret_cast<bdLogMessage_t> (0x140331F60);
 
   using  IWNet_Frame_t = void (*) (int);
-  inline IWNet_Frame_t IWNet_Frame (reinterpret_cast<IWNet_Frame_t> (0x14012df70));
+  inline IWNet_Frame_t IWNet_Frame (reinterpret_cast<IWNet_Frame_t> (0x14012DF70));
+
+  using  Uk_OnConnected_t = void (*) (int);
+  inline Uk_OnConnected_t Uk_OnConnected (reinterpret_cast<Uk_OnConnected_t> (0x1402A6850));
+
 }

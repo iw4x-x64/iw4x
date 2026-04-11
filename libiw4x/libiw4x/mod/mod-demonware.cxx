@@ -1,13 +1,16 @@
 #include <libiw4x/mod/mod-demonware.hxx>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 
 #include <libiw4x/detour.hxx>
 
+#include <libiw4x/demonware/bd-auth.hxx>
 #include <libiw4x/demonware/bd-platform-log.hxx>
 
 using namespace std;
+using namespace iw4x::demonware;
 
 namespace iw4x
 {
@@ -84,6 +87,15 @@ namespace iw4x
           // completely redundant.
           //
           uk_retry_count = 0, uk_timestamp = 0;
+
+          Uk_OnConnected (controller);
+
+          // Populate the session name AFTER live_on_connected, which
+          // resets the session array.
+          //
+          auto sn (reinterpret_cast<char*> (0x141A4A998 + 0x30D4));
+          strncpy (sn, auth::ticket ().username, 16 - 1), sn[16 - 1] = '\0';
+          assert  (uk_session_signin == 1);
         }
       }
     }
@@ -91,8 +103,8 @@ namespace iw4x
     demonware_module::
     demonware_module ()
     {
-      detour (bdLogMessage, &demonware::bd_log_message);
-      detour (IWNet_Frame,  iwnet_frame);
+      detour (bdLogMessage, &bd_log_message);
+      detour (IWNet_Frame,  &iwnet_frame);
     }
   }
 }
