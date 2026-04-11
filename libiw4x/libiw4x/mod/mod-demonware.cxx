@@ -97,6 +97,10 @@ namespace iw4x
           strncpy (sn, auth::ticket ().username, 16 - 1), sn[16 - 1] = '\0';
           assert  (uk_session_signin == 1);
         }
+
+        // We're done here so pump the task completion array.
+        //
+        DW_SendPush ();
       }
     }
 
