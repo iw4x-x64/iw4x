@@ -10,8 +10,8 @@ namespace iw4x
   {
     // Layout-compatible bdLobbyConnection.
     //
-    // The game holds a pointer to this at lobby_service +0x90 and reads the
-    // reference count at +0x08. Note that all interaction is routed through
+    // The game holds a pointer to this at lobby_service 0x90 and reads the
+    // reference count at 0x08. Note that all interaction is routed through
     // hooked lobby service accessors. We just need to make sure the connection
     // object exists as a valid target and its reference count never drops to
     // zero.
@@ -33,7 +33,7 @@ namespace iw4x
     // sub-service pointers are scattered at 0x40, 0x60, and 0x80, while our
     // bdLobbyConnection pointer sits at 0x90.
     //
-    struct bd_lobby_service
+    struct bd_lobby_service_impl
     {
       void*                vtable;            // 0x00: 4-slot vtable
       uint8_t              net[0x10];         // 0x08: network/socket data
@@ -52,18 +52,14 @@ namespace iw4x
       int32_t              flags3;            // 0x13C
     };
 
-    static_assert (sizeof (bd_lobby_service) == 0x140);
+    static_assert (sizeof (bd_lobby_service_impl) == 0x140);
 
-    // Emulated bdLobbyServiceImpl.
-    //
     class LIBIW4X_SYMEXPORT lobby_service
     {
     public:
       lobby_service ();
 
-      // Access the emulated singleton.
-      //
-      static bd_lobby_service&
+      static bd_lobby_service_impl&
       instance ();
     };
   }

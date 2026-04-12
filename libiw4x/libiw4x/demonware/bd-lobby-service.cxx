@@ -15,10 +15,10 @@ namespace iw4x
   {
     namespace
     {
-      alignas (16) bd_lobby_connection connection;
-      alignas (16) bd_lobby_service lobby;
+      alignas (16) bd_lobby_connection   lobby_connection;
+      alignas (16) bd_lobby_service_impl lobby_service_impl;
 
-      // bd_lobby_service virtual methods (4-slot vtable).
+      // bd_lobby_service_impl virtual methods (4-slot vtable).
       //
       // Note that these slots match the game's vtable exactly at 0x1403DBAC0:
       //   [0] destructor   (0x14031C4F0)
@@ -27,37 +27,39 @@ namespace iw4x
       //   [3] onDisconnect (0x14031D320)
 
       [[gnu::ms_abi]] void
-      lobby_destructor (bd_lobby_service*)
+      lobby_service_impl_destructor (bd_lobby_service_impl*)
       {
         // Since our singleton is statically allocated, there is nothing
         // to actually free here.
       }
 
       [[gnu::ms_abi]] void
-      lobby_on_connect (bd_lobby_service*)
+      lobby_service_impl_on_connect (bd_lobby_service_impl*)
       {
         // The connection is always established in our emulation, so we
         // can just no-op this.
       }
 
       [[gnu::ms_abi]] void
-      lobby_pump (bd_lobby_service*)
+      lobby_service_impl_pump (bd_lobby_service_impl*)
       {
         // Task completion is handled in the startTask hook instead, so
         // pumping does nothing.
       }
 
       [[gnu::ms_abi]] void
-      lobby_on_disconnect (bd_lobby_service*)
+      lobby_service_impl_on_disconnect (bd_lobby_service_impl*)
       {
         // We never disconnect.
       }
 
-      void* lobby_vtable[4] {reinterpret_cast<void*> (&lobby_destructor),
-                             reinterpret_cast<void*> (&lobby_on_connect),
-                             reinterpret_cast<void*> (&lobby_pump),
-                             reinterpret_cast<void*> (&lobby_on_disconnect)};
-
+      void* lobby_service_impl_vtable[4]
+      {
+        reinterpret_cast<void*> (&lobby_service_impl_destructor),
+        reinterpret_cast<void*> (&lobby_service_impl_on_connect),
+        reinterpret_cast<void*> (&lobby_service_impl_pump),
+        reinterpret_cast<void*> (&lobby_service_impl_on_disconnect)
+      };
 
       // bd_lobby_connection virtual methods.
       //
@@ -66,36 +68,36 @@ namespace iw4x
       // unidentified virtual slots.
 
       [[gnu::ms_abi]] int64_t
-      connection_destructor (bd_lobby_connection*)
+      lobby_connection_destructor (bd_lobby_connection*)
       {
         return 0;
       }
 
       [[gnu::ms_abi]] int64_t
-      connection_stub (void*)
+      lobby_connection_stub (void*)
       {
         return 0;
       }
 
-      static constexpr size_t connection_vtable_slots (32);
-      void* connection_vtable[connection_vtable_slots];
+      static constexpr size_t lobby_connection_vtable_slots (32);
+      void* lobby_connection_vtable[lobby_connection_vtable_slots];
 
       void
-      init_connection ()
+      lobby_connection_constructor ()
       {
-        auto stub (reinterpret_cast<void*> (&connection_stub));
+        auto stub (reinterpret_cast<void*> (&lobby_connection_stub));
 
-        for (auto& e : connection_vtable)
+        for (auto& e : lobby_connection_vtable)
           e = stub;
 
-        connection_vtable[0] = reinterpret_cast<void*> (&connection_destructor);
-        connection.vtable = connection_vtable;
-        connection.refcount = 0x7FFFFFFF; // never reaches zero
+        lobby_connection_vtable[0] = reinterpret_cast<void*> (&lobby_connection_destructor);
+        lobby_connection.vtable = lobby_connection_vtable;
+        lobby_connection.refcount = 0x7FFFFFFF; // never reaches zero
 
-        memset (connection.body, 0, sizeof (connection.body));
+        memset (lobby_connection.body, 0, sizeof (lobby_connection.body));
       }
 
-      // Stub bdStorage.
+      // bdStorage.
       //
       // The game reads 0x00 (status) and 0x08 (bdLobbyConnection*).
       //
@@ -114,136 +116,134 @@ namespace iw4x
       alignas (16) bd_storage_stub bd_storage {};
 
       void
-      init_lobby ()
+      lobby_service_impl_constructor ()
       {
-        memset (&lobby, 0, sizeof (lobby));
+        memset (&lobby_service_impl, 0, sizeof (lobby_service_impl));
 
-        lobby.vtable = lobby_vtable;
-        lobby.connection = &connection;
+        lobby_service_impl.vtable = lobby_service_impl_vtable;
+        lobby_service_impl.connection = &lobby_connection;
 
         bd_storage.status = 0;
-        bd_storage.connection = &connection;
+        bd_storage.connection = &lobby_connection;
 
-        lobby.storage = &bd_storage;
+        lobby_service_impl.storage = &bd_storage;
       }
 
       // dw_service (0x140136210).
       //
       // The game normally creates the singleton lazily at 0x140714A50.
+      //
+      // TODO: move this elsewhere?
 
-      using  dw_sevice_t = void* (*) ();
-      inline dw_sevice_t dw_sevice_original = reinterpret_cast<dw_sevice_t> (0x140136210);
+      using dw_sevice_t = void* (*) ();
+      inline dw_sevice_t dw_sevice_original =
+        reinterpret_cast<dw_sevice_t> (0x140136210);
 
       [[gnu::ms_abi]] void*
       dw_service ()
       {
-        return &lobby;
+        return &lobby_service_impl;
       }
 
       // Non-virtual member function hooks.
       //
 
-      // bdLobbyServiceImpl::connect.
-      //
-      using lobby_connect_t = bool (*) (void*, void*, void*, bool);
-      lobby_connect_t lobby_connect_original (reinterpret_cast<lobby_connect_t> (0x14031c750));
+      using bdLobbyServiceImplConnect_t = bool (*) (void*, void*, void*, bool);
+      bdLobbyServiceImplConnect_t bdLobbyServiceImplConnect (
+        reinterpret_cast<bdLobbyServiceImplConnect_t> (0x14031c750));
 
       [[gnu::ms_abi]] bool
-      lobby_connect (void*, void*, void*, bool)
+      lobby_service_impl_connect (void*, void*, void*, bool)
       {
         return true;
       }
 
-      // bdLobbyServiceImpl::disconnect.
-      //
-      using lobby_disconnect_t = void (*) (void*, int);
-      lobby_disconnect_t lobby_disconnect_original (reinterpret_cast<lobby_disconnect_t> (0x14031c950));
+      using bdLobbyServiceImplDisconnect_t = void (*) (void*, int);
+      bdLobbyServiceImplDisconnect_t bdLobbyServiceImplDisconnect (
+        reinterpret_cast<bdLobbyServiceImplDisconnect_t> (0x14031c950));
 
       [[gnu::ms_abi]] void
-      lobby_disconnect (void*, int reason)
+      lobby_service_impl_disconnect (void*, int reason)
       {
         // We do not have anything to tear down.
         //
       }
 
-      // bdLobbyServiceImpl::getStatus.
-      //
-      using get_status_t = int32_t (*) (void*);
-      get_status_t get_status_original (reinterpret_cast<get_status_t> (0x14031cb10));
+      using bdLobbyServiceImplGetStatus_t = int32_t (*) (void*);
+      bdLobbyServiceImplGetStatus_t bdLobbyServiceImplGetStatus (
+        reinterpret_cast<bdLobbyServiceImplGetStatus_t> (0x14031cb10));
 
       [[gnu::ms_abi]] int32_t
-      get_status (void*)
+      lobby_service_impl_get_status (void*)
       {
         return 2; // always BD_ONLINE
       }
 
-      // bdLobbyServiceImpl::getMatchMaking.
-      //
-      using get_matchmaking_t = void* (*) (void*);
-      get_matchmaking_t get_matchmaking_original (reinterpret_cast<get_matchmaking_t> (0x14031c990));
+      using bdLobbyServiceImplGetMatchmaking_t = void* (*) (void*);
+      bdLobbyServiceImplGetMatchmaking_t bdLobbyServiceImplGetMatchmaking (
+        reinterpret_cast<bdLobbyServiceImplGetMatchmaking_t> (0x14031c990));
 
       [[gnu::ms_abi]] void*
-      get_matchmaking (void*)
+      lobby_service_impl_get_matchmaking (void*)
       {
-        return lobby.matchmaking;
+        return lobby_service_impl.matchmaking;
       }
 
-      // bdLobbyServiceImpl::getRemoteTaskMgr.
-      //
-      using get_task_mgr_t = void* (*) (void*);
-      get_task_mgr_t get_task_mgr_original (reinterpret_cast<get_task_mgr_t> (0x14031CA30));
+      using bdLobbyServiceImplGetTaskMgr_t = void* (*) (void*);
+      bdLobbyServiceImplGetTaskMgr_t bdLobbyServiceImplGetTaskMgr (
+        reinterpret_cast<bdLobbyServiceImplGetTaskMgr_t> (0x14031CA30));
 
       [[gnu::ms_abi]] void*
-      get_task_mgr (void*)
+      lobby_service_impl_get_task_mgr (void*)
       {
-        return lobby.task_mgr;
+        return lobby_service_impl.task_mgr;
       }
 
-      // bdLobbyServiceImpl::getPerformance.
-      //
-      using get_performance_t = void* (*) (void*);
-      get_performance_t get_performance_original (reinterpret_cast<get_performance_t> (0x14031ca70));
+      using bdLobbyServiceImplGetPerformance_t = void* (*) (void*);
+      bdLobbyServiceImplGetPerformance_t bdLobbyServiceImplGetPerformance (
+        reinterpret_cast<bdLobbyServiceImplGetPerformance_t> (0x14031ca70));
 
       [[gnu::ms_abi]] void*
-      get_performance (void*)
+      lobby_service_impl_get_performance (void*)
       {
-        return lobby.performance;
+        return lobby_service_impl.performance;
       }
 
-      // bdLobbyServiceImpl::getStorage.
-      //
-      using get_storage_t = void* (*) (void*);
-      get_storage_t get_storage_original (reinterpret_cast<get_storage_t> (0x14031cff0));
+      using bdLobbyServiceImplGetStorage_t = void* (*) (void*);
+      bdLobbyServiceImplGetStorage_t bdLobbyServiceImplGetStorage (
+        reinterpret_cast<bdLobbyServiceImplGetStorage_t> (0x14031cff0));
 
       [[gnu::ms_abi]] void*
-      get_storage (void*)
+      lobby_service_impl_get_storage (void*)
       {
         // Return the sub-service located at +0x60. This safely points to
         // store_impl which is guaranteed non-null.
         //
-        return lobby.storage;
+        return lobby_service_impl.storage;
       }
     }
 
-    lobby_service::lobby_service ()
+    lobby_service::
+    lobby_service ()
     {
-      init_connection ();
-      init_lobby ();
+      lobby_connection_constructor ();
+      lobby_service_impl_constructor ();
 
-      detour (dw_sevice_original,        &dw_service);
-      detour (get_matchmaking_original,  &get_matchmaking);
-      detour (get_performance_original,  &get_performance);
-      detour (get_status_original,       &get_status);
-      detour (get_storage_original,      &get_storage);
-      detour (get_task_mgr_original,     &get_task_mgr);
-      detour (lobby_connect_original,    &lobby_connect);
-      detour (lobby_disconnect_original, &lobby_disconnect);
+      detour (dw_sevice_original,                &dw_service);
+
+      detour (bdLobbyServiceImplGetMatchmaking,  &lobby_service_impl_get_matchmaking);
+      detour (bdLobbyServiceImplGetPerformance,  &lobby_service_impl_get_performance);
+      detour (bdLobbyServiceImplGetStatus,       &lobby_service_impl_get_status);
+      detour (bdLobbyServiceImplGetStorage,      &lobby_service_impl_get_storage);
+      detour (bdLobbyServiceImplGetTaskMgr,      &lobby_service_impl_get_task_mgr);
+      detour (bdLobbyServiceImplConnect,         &lobby_service_impl_connect);
+      detour (bdLobbyServiceImplDisconnect,      &lobby_service_impl_disconnect);
     }
 
-    bd_lobby_service&
+    bd_lobby_service_impl&
     lobby_service::instance ()
     {
-      return lobby;
+      return lobby_service_impl;
     }
   }
 }
