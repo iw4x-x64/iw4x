@@ -1,4 +1,4 @@
-#include <libiw4x/demonware/bd-auth.hxx>
+#include <libiw4x/demonware/bd-auth-service.hxx>
 
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
@@ -20,12 +20,9 @@
 #  endif
 #endif
 
-#include <array>
-#include <cstdint>
+#include <algorithm>
 #include <random>
 #include <string>
-#include <ranges>
-#include <algorithm>
 
 using namespace std;
 
@@ -33,12 +30,12 @@ namespace iw4x
 {
   namespace demonware
   {
-    auth_ticket local_ticket {};
+    bd_auth_ticket auth_ticket {};
 
-    auth::
-    auth ()
+    auth_service::
+    auth_service ()
     {
-      local_ticket.title_id = 0x7DA; // IW4 (2010)
+      auth_ticket.title_id = 0x7DA; // IW4 (2010)
 
       // @wroyca: We need to think about how we want to handle unique id.
       //
@@ -47,7 +44,7 @@ namespace iw4x
       GetComputerNameA (hn, &sz);
 
       hash<string> hs;
-      local_ticket.user_id = hs (string (hn, sz));
+      auth_ticket.user_id = hs (string (hn, sz));
 
       // Note that the session array name field is only 0x10 bytes. So we
       // truncate the hostname to 15 characters plus the null terminator to use
@@ -61,8 +58,8 @@ namespace iw4x
       //          least a more generous buffer.
       //
       //
-      strncpy (local_ticket.username, hn, sizeof (local_ticket.username) - 1);
-      local_ticket.username[sizeof (local_ticket.username) - 1] = '\0';
+      strncpy (auth_ticket.username, hn, sizeof (auth_ticket.username) - 1);
+      auth_ticket.username[sizeof (auth_ticket.username) - 1] = '\0';
 
       // Fill the session key and ticket data with random bytes. Since these
       // values are opaque to the game and only inspected by the lobby
@@ -72,14 +69,14 @@ namespace iw4x
       seed_seq ss {rd (), rd (), rd (), rd ()};
       independent_bits_engine<mt19937_64, 8, unsigned char> r (ss);
 
-      ranges::generate (local_ticket.session_key, ref (r));
-      ranges::generate (local_ticket.ticket_data, ref (r));
+      ranges::generate (auth_ticket.session_key, ref (r));
+      ranges::generate (auth_ticket.ticket_data, ref (r));
     }
 
-    const auth_ticket&
-    auth::ticket ()
+    const bd_auth_ticket& auth_service::
+    ticket ()
     {
-      return local_ticket;
+      return auth_ticket;
     }
   }
 }
