@@ -6,7 +6,15 @@
 
 #include <libiw4x/detour.hxx>
 
-#include <libiw4x/demonware/bd-auth.hxx>
+#include <libiw4x/demonware/bd-auth-service.hxx>
+#include <libiw4x/demonware/bd-bandwidth-test-client.hxx>
+#include <libiw4x/demonware/bd-lobby-service.hxx>
+#include <libiw4x/demonware/bd-remote-task.hxx>
+#include <libiw4x/demonware/bd-remote-task-manager.hxx>
+#include <libiw4x/demonware/bd-storage.hxx>
+
+
+
 #include <libiw4x/demonware/bd-lobby-service.hxx>
 #include <libiw4x/demonware/bd-platform-log.hxx>
 
@@ -100,7 +108,7 @@ namespace iw4x
           // resets the session array.
           //
           auto sn (reinterpret_cast<char*> (0x141A4A998 + 0x30D4));
-          strncpy (sn, auth::ticket ().username, 16 - 1), sn[16 - 1] = '\0';
+          strncpy (sn, auth_service::ticket ().username, 16 - 1), sn[16 - 1] = '\0';
           assert  (uk_session_signin == 1);
         }
 
@@ -152,6 +160,12 @@ namespace iw4x
     demonware_module::
     demonware_module ()
     {
+      demonware::auth_service ();
+      demonware::lobby_service ();
+      demonware::remote_task_manager ();
+      demonware::storage ();
+      demonware::bandwidth_test_client ();
+
       router_init ();
 
       dw_socket_router = &router;
@@ -160,7 +174,7 @@ namespace iw4x
       uk_state = 8;
       uk_disable = false;
       dw_session = session_stub;
-      dw_session_context = auth::ticket ().user_id;
+      dw_session_context = auth_service::ticket ().user_id;
 
       detour (bdLogMessage, &bd_log_message);
       detour (IWNet_Frame,  &iwnet_frame);
