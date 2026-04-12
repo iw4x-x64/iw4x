@@ -11,6 +11,37 @@ namespace iw4x
 {
   namespace demonware
   {
+    // Layout-compatible bdBitBuffer for game interop.
+    //
+    // 0x00  vtable*              vtable (0x1403DA2D0)
+    // 0x08  refcount             reference count (int32)
+    // 0x10  data*                pointer to byte array
+    // 0x18  capacity             in bytes (int32)
+    // 0x1C  element_count        allocated count (int32)
+    // 0x20  write_position       current write offset (bits, int32)
+    // 0x24  max_write_position   high water mark (bits, int32)
+    // 0x28  read_position        current read offset (bits, int32)
+    // 0x2C  flags                (uint8)
+    // 0x2D  type_checking        (uint8)
+    //
+    struct bd_bit_buffer
+    {
+      void*    vtable;
+      int32_t  refcount;
+      int32_t  pad0;
+      uint8_t* data;
+      int32_t  capacity;
+      int32_t  element_count;
+      int32_t  write_position;
+      int32_t  max_write_position;
+      int32_t  read_position;
+      uint8_t  flags;
+      uint8_t  type_checking;
+      uint16_t pad1;
+    };
+
+    static_assert (sizeof (bd_bit_buffer) == 0x30);
+
     // Wire-format type tags for the bit-level serialization protocol.
     //
     // Each typed field is prefixed by a 5-bit tag that identifies the type
