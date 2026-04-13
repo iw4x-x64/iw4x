@@ -768,7 +768,6 @@ namespace iw4x
     const char* name;
     unsigned int flags;
     dvar_type type;
-    bool is_modified;
     dvar_value current_value;
     dvar_value latched_value;
     dvar_value reset_value;
