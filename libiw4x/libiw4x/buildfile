@@ -6,6 +6,13 @@ import intf_libs += libboost-asio%lib{boost_asio}
 import intf_libs += libquill%lib{quill}
 import intf_libs += libzydis%lib{zydis}
 
+# Steamworks SDK
+#
+steam_dir = $src_root/upstream/steamworks_sdk
+
+if ($cxx.target.system == 'mingw32')
+  cxx.libs += $steam_dir/redistributable_bin/win64/steam_api64.lib
+
 lib{iw4x}: {hxx ixx txx cxx}{** -{version utility-*installed}} \
            {hxx            }{     version                    } \
            {def            }{**                              } \
@@ -504,7 +511,7 @@ hxx{version}:
 
 # Build options.
 #
-cxx.poptions =+ "-I$out_root" "-I$src_root"
+cxx.poptions =+ "-I$out_root" "-I$src_root" "-I$steam_dir/public"
 
 if ($config.libiw4x.develop)
   cxx.poptions += "-DLIBIW4X_DEVELOP"
