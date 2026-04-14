@@ -72,7 +72,7 @@ enum EFriendFlags
 	k_EFriendFlagFriendshipRequested	= 0x02,
 	k_EFriendFlagImmediate		= 0x04,			// "regular" friend
 	k_EFriendFlagClanMember		= 0x08,
-	k_EFriendFlagOnGameServer	= 0x10,	
+	k_EFriendFlagOnGameServer	= 0x10,
 	// k_EFriendFlagHasPlayedWith	= 0x20,	// not currently used
 	// k_EFriendFlagFriendOfFriend	= 0x40, // not currently used
 	k_EFriendFlagRequestingFriendship = 0x80,
@@ -92,7 +92,7 @@ enum EFriendFlags
 #pragma pack( push, 8 )
 #else
 #error steam_api_common.h should define VALVE_CALLBACK_PACK_xxx
-#endif 
+#endif
 struct FriendGameInfo_t
 {
 	CGameID m_gameID;
@@ -211,10 +211,10 @@ public:
 	// returns the name another user - guaranteed to not be NULL.
 	// same rules as GetFriendPersonaState() apply as to whether or not the user knowns the name of the other user
 	// note that on first joining a lobby, chat room or game server the local user will not known the name of the other users automatically; that information will arrive asyncronously
-	// 
+	//
 	virtual const char *GetFriendPersonaName( CSteamID steamIDFriend ) = 0;
 
-	// returns true if the friend is actually in a game, and fills in pFriendGameInfo with an extra details 
+	// returns true if the friend is actually in a game, and fills in pFriendGameInfo with an extra details
 	virtual bool GetFriendGamePlayed( CSteamID steamIDFriend, STEAM_OUT_STRUCT() FriendGameInfo_t *pFriendGameInfo ) = 0;
 	// accesses old friends names - returns an empty string when their are no more items in the history
 	virtual const char *GetFriendPersonaNameHistory( CSteamID steamIDFriend, int iPersonaName ) = 0;
@@ -266,7 +266,7 @@ public:
 	// User is in a game pressing the talk button (will suppress the microphone for all voice comms from the Steam friends UI)
 	virtual void SetInGameVoiceSpeaking( CSteamID steamIDUser, bool bSpeaking ) = 0;
 
-	// activates the game overlay, with an optional dialog to open 
+	// activates the game overlay, with an optional dialog to open
 	// valid options include "Friends", "Community", "Players", "Settings", "OfficialGameGroup", "Stats", "Achievements",
 	// "chatroomgroup/nnnn"
 	virtual void ActivateGameOverlay( const char *pchDialog ) = 0;
@@ -274,7 +274,7 @@ public:
 	// activates game overlay to a specific place
 	// valid options are
 	//		"steamid" - opens the overlay web browser to the specified user or groups profile
-	//		"chat" - opens a chat window to the specified user, or joins the group chat 
+	//		"chat" - opens a chat window to the specified user, or joins the group chat
 	//		"jointrade" - opens a window to a Steam Trading session that was started with the ISteamEconomy/StartTrade Web API
 	//		"stats" - opens the overlay web browser to the specified user's stats
 	//		"achievements" - opens the overlay web browser to the specified user's achievements
@@ -291,8 +291,8 @@ public:
 	// activates game overlay to store page for app
 	virtual void ActivateGameOverlayToStore( AppId_t nAppID, EOverlayToStoreFlag eFlag ) = 0;
 
-	// Mark a target user as 'played with'. This is a client-side only feature that requires that the calling user is 
-	// in game 
+	// Mark a target user as 'played with'. This is a client-side only feature that requires that the calling user is
+	// in game
 	virtual void SetPlayedWith( CSteamID steamIDUserPlayedWith ) = 0;
 
 	// activates game overlay to open the invite dialog. Invitations will be sent for the provided lobby.
@@ -309,7 +309,7 @@ public:
 	virtual int GetLargeFriendAvatar( CSteamID steamIDFriend ) = 0;
 
 	// requests information about a user - persona name & avatar
-	// if bRequireNameOnly is set, then the avatar of a user isn't downloaded 
+	// if bRequireNameOnly is set, then the avatar of a user isn't downloaded
 	// - it's a lot slower to download avatars and churns the local cache, so if you don't need avatars, don't request them
 	// if returns true, it means that data is being requested, and a PersonaStateChanged_t callback will be posted when it's retrieved
 	// if returns false, it means that we already have all the details about that user, and functions can be called immediately
@@ -325,7 +325,7 @@ public:
 	virtual SteamAPICall_t RequestClanOfficerList( CSteamID steamIDClan ) = 0;
 
 	// iteration of clan officers - can only be done when a RequestClanOfficerList() call has completed
-	
+
 	// returns the steamID of the clan owner
 	virtual CSteamID GetClanOwner( CSteamID steamIDClan ) = 0;
 	// returns the number of officers in a clan (including the owner)
@@ -446,7 +446,7 @@ STEAM_DEFINE_USER_INTERFACE_ACCESSOR( ISteamFriends *, SteamFriends, STEAMFRIEND
 #pragma pack( push, 8 )
 #else
 #error steam_api_common.h should define VALVE_CALLBACK_PACK_xxx
-#endif 
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: called when a friends' status changes
@@ -454,7 +454,7 @@ STEAM_DEFINE_USER_INTERFACE_ACCESSOR( ISteamFriends *, SteamFriends, STEAMFRIEND
 struct PersonaStateChange_t
 {
 	enum { k_iCallback = k_iSteamFriendsCallbacks + 4 };
-	
+
 	uint64 m_ulSteamID;		// steamID of the friend who changed
 	int m_nChangeFlags;		// what's changed
 };
@@ -518,7 +518,7 @@ struct GameLobbyJoinRequested_t
 	CSteamID m_steamIDLobby;
 
 	// The friend they did the join via (will be invalid if not directly via a friend)
-	CSteamID m_steamIDFriend;		
+	CSteamID m_steamIDFriend;
 };
 
 
@@ -694,7 +694,7 @@ struct EquippedProfileItemsChanged_t
 };
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 struct EquippedProfileItems_t
 {

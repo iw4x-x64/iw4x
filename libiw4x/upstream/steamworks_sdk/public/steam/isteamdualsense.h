@@ -31,7 +31,7 @@ typedef enum ScePadTriggerEffectMode{
 } ScePadTriggerEffectMode;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to off mode.
  *         Off Mode: Stop trigger effect.
  **/
@@ -40,7 +40,7 @@ typedef struct ScePadTriggerEffectOffParam{
 } ScePadTriggerEffectOffParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to Feedback mode.
  *         Feedback Mode: The motor arm pushes back trigger.
  *                        Trigger obtains stiffness at specified position.
@@ -52,7 +52,7 @@ typedef struct ScePadTriggerEffectFeedbackParam{
 } ScePadTriggerEffectFeedbackParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to Weapon mode.
  *         Weapon Mode: Emulate weapon like gun trigger.
  **/
@@ -64,7 +64,7 @@ typedef struct ScePadTriggerEffectWeaponParam{
 } ScePadTriggerEffectWeaponParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to Vibration mode.
  *         Vibration Mode: Vibrates motor arm around specified position.
  **/
@@ -76,7 +76,7 @@ typedef struct ScePadTriggerEffectVibrationParam{
 } ScePadTriggerEffectVibrationParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to ScePadTriggerEffectMultiplePositionFeedbackParam mode.
  *         Multi Position Feedback Mode: The motor arm pushes back trigger.
  *                                       Trigger obtains specified stiffness at each control point.
@@ -91,7 +91,7 @@ typedef struct ScePadTriggerEffectMultiplePositionFeedbackParam{
 } ScePadTriggerEffectMultiplePositionFeedbackParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to Feedback3 mode.
  *         Slope Feedback Mode: The motor arm pushes back trigger between two spedified control points.
  *                              Stiffness of the trigger is changing depending on the set place.
@@ -106,7 +106,7 @@ typedef struct ScePadTriggerEffectSlopeFeedbackParam{
 } ScePadTriggerEffectSlopeFeedbackParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect to Vibration2 mode.
  *         Multi Position Vibration Mode: Vibrates motor arm around specified control point.
  *                                        Trigger vibrates specified amplitude at each control point.
@@ -122,7 +122,7 @@ typedef struct ScePadTriggerEffectMultiplePositionVibrationParam{
 } ScePadTriggerEffectMultiplePositionVibrationParam;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect mode.
  **/
 typedef union ScePadTriggerEffectCommandData{
@@ -136,7 +136,7 @@ typedef union ScePadTriggerEffectCommandData{
 } ScePadTriggerEffectCommandData;
 
 /**
- *E  
+ *E
  *  @brief parameter for setting the trigger effect.
  **/
 typedef struct ScePadTriggerEffectCommand{
@@ -146,7 +146,7 @@ typedef struct ScePadTriggerEffectCommand{
 } ScePadTriggerEffectCommand;
 
 /**
- *E  
+ *E
  *  @brief parameter for the scePadSetTriggerEffect function.
  **/
 typedef struct ScePadTriggerEffectParam{

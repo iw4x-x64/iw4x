@@ -1,6 +1,6 @@
 //====== Copyright 1996-2008, Valve Corporation, All rights reserved. =======
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================
 
@@ -25,12 +25,12 @@
 struct SteamPS3Params_t
 {
 	uint32 m_unVersion;										// set to STEAM_PS3_CURRENT_PARAMS_VER
-	
+
 	void *pReserved;
 	uint32 m_nAppId;										// set to your game's appid
 
 	char m_rgchInstallationPath[ STEAM_PS3_PATH_MAX ];		// directory containing latest steam prx's and sdata. Can be read only (BDVD)
-	char m_rgchSystemCache[ STEAM_PS3_PATH_MAX ];			// temp working cache, not persistent 
+	char m_rgchSystemCache[ STEAM_PS3_PATH_MAX ];			// temp working cache, not persistent
 	char m_rgchGameData[ STEAM_PS3_PATH_MAX ];				// persistent game data path for storing user data
 	char m_rgchNpServiceID[ STEAM_PS3_SERVICE_ID_MAX ];
 	char m_rgchNpCommunicationID[ STEAM_PS3_COMMUNICATION_ID_MAX ];
@@ -58,7 +58,7 @@ struct SteamPS3Params_t
 	// region codes are "SCEA", "SCEE", "SCEJ". must be zero terminated
 	char m_rgchRegionCode[ STEAM_PS3_REGION_CODE_MAX ];
 
-	// Should be SYS_TTYP3 through SYS_TTYP10, if it's 0 then Steam won't spawn a 
+	// Should be SYS_TTYP3 through SYS_TTYP10, if it's 0 then Steam won't spawn a
 	// thread to read console input at all.  Using this let's you use Steam console commands
 	// like: profile_on, profile_off, profile_dump, mem_stats, mem_validate.
 	unsigned int m_cSteamInputTTY;
@@ -80,7 +80,7 @@ struct SteamPS3Params_t
 	{
 		bool m_bNeedInit;
 	} m_sysPngInitInfo;
-	
+
 	struct Ps3sysutilUserInfo_t
 	{
 		bool m_bNeedInit;

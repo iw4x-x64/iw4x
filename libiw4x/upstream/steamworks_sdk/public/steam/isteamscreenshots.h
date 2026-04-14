@@ -117,4 +117,3 @@ struct ScreenshotRequested_t
 #pragma pack( pop )
 
 #endif // ISTEAMSCREENSHOTS_H
-

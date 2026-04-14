@@ -23,7 +23,7 @@ constexpr int k_cbSteamNetworkingSocketsFakeUDPPortMaxMessageSize = 4096;
 ///
 /// Acts like a UDP port, sending and receiving datagrams addressed using
 /// FakeIP addresses.
-/// 
+///
 /// See: ISteamNetworkingSockets::CreateFakeUDPPort
 
 class ISteamNetworkingFakeUDPPort
@@ -36,10 +36,10 @@ public:
 	virtual void DestroyFakeUDPPort() = 0;
 
 	/// Send a datagram to the specified FakeIP.
-	/// 
+	///
 	/// See ISteamNetworkingSockets::SendMessageToConnection for the meaning of
 	/// nSendFlags and possible return codes.
-	/// 
+	///
 	/// Notes:
 	/// - datagrams larger than the underlying MTU are supported, but
 	///   reliable messages (k_nSteamNetworkingSend_Reliable) are not supported.
@@ -59,9 +59,9 @@ public:
 	virtual EResult SendMessageToFakeIP( const SteamNetworkingIPAddr &remoteAddress, const void *pData, uint32 cbData, int nSendFlags ) = 0;
 
 	/// Receive messages on the port.
-	/// 
+	///
 	/// Returns the number of messages returned into your array, up to nMaxMessages.
-	/// 
+	///
 	/// SteamNetworkingMessage_t::m_identity in the returned message(s) will always contain
 	/// a FakeIP.  See ISteamNetworkingUtils::GetRealIdentityForFakeIP.
 	virtual int ReceiveMessages( SteamNetworkingMessage_t **ppOutMessages, int nMaxMessages ) = 0;

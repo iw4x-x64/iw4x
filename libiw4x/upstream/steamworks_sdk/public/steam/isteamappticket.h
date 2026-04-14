@@ -1,7 +1,7 @@
 //====== Copyright 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: a private, but well versioned, interface to get at critical bits
-// of a steam3 appticket - consumed by the simple drm wrapper to let it 
+// of a steam3 appticket - consumed by the simple drm wrapper to let it
 // ask about ownership with greater confidence.
 //
 //=============================================================================
@@ -12,8 +12,8 @@
 
 //-----------------------------------------------------------------------------
 // Purpose: hand out a reasonable "future proof" view of an app ownership ticket
-// the raw (signed) buffer, and indices into that buffer where the appid and 
-// steamid are located.  the sizes of the appid and steamid are implicit in 
+// the raw (signed) buffer, and indices into that buffer where the appid and
+// steamid are located.  the sizes of the appid and steamid are implicit in
 // (each version of) the interface - currently uin32 appid and uint64 steamid
 //-----------------------------------------------------------------------------
 class ISteamAppTicket

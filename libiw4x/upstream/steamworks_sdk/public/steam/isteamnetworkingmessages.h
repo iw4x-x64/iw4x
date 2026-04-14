@@ -134,7 +134,7 @@ public:
 
 /// Posted when a remote host is sending us a message, and we do not already have a session with them
 struct SteamNetworkingMessagesSessionRequest_t
-{ 
+{
 	enum { k_iCallback = k_iSteamNetworkingMessagesCallbacks + 1 };
 	SteamNetworkingIdentity m_identityRemote;			// user who wants to talk to us
 };
@@ -151,7 +151,7 @@ struct SteamNetworkingMessagesSessionRequest_t
 /// way to detect that this is happening is that querying the session state may return
 /// none, connecting, and findingroute again.
 struct SteamNetworkingMessagesSessionFailed_t
-{ 
+{
 	enum { k_iCallback = k_iSteamNetworkingMessagesCallbacks + 2 };
 
 	/// Detailed info about the session that failed.

@@ -388,7 +388,7 @@ protected:
 /// To do this we first need to fetch the network configuration,
 /// which describes what POPs are available.
 struct SteamRelayNetworkStatus_t
-{ 
+{
 	enum { k_iCallback = k_iSteamNetworkingUtilsCallbacks + 1 };
 
 	/// Summary status.  When this is "current", initialization has

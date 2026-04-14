@@ -121,15 +121,15 @@ struct SteamIPAddress_t
 
 	ESteamIPType m_eType;
 
-	bool IsSet() const 
-	{ 
+	bool IsSet() const
+	{
 		if ( k_ESteamIPTypeIPv4 == m_eType )
 		{
 			return m_unIPv4 != 0;
 		}
-		else 
+		else
 		{
-			return m_ipv6Qword[0] !=0 || m_ipv6Qword[1] != 0; 
+			return m_ipv6Qword[0] !=0 || m_ipv6Qword[1] != 0;
 		}
 	}
 

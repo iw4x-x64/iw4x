@@ -443,7 +443,7 @@ enum ESteamNetworkingConnectionState
 	/// read it back.  Typically this is not a problem, as application protocols that utilize
 	/// the lingering functionality are designed for the remote host to wait for the response
 	/// before sending any more data.
-	k_ESteamNetworkingConnectionState_Linger = -2, 
+	k_ESteamNetworkingConnectionState_Linger = -2,
 
 	/// Connection is completely inactive and ready to be destroyed
 	k_ESteamNetworkingConnectionState_Dead = -3,
@@ -485,7 +485,7 @@ enum ESteamNetConnectionEnd
 	// 2xxx: Application ended the connection in some sort of exceptional
 	//       or unusual manner that might indicate a bug or configuration
 	//       issue.
-	// 
+	//
 	k_ESteamNetConnectionEnd_AppException_Min = 2000,
 		k_ESteamNetConnectionEnd_AppException_Generic = k_ESteamNetConnectionEnd_AppException_Min,
 		// Use codes in this range for "unusual" disconnection
@@ -776,7 +776,7 @@ struct SteamNetConnectionRealTimeStatus_t
 	/// of the channel.  If you send data faster than this, it must be queued and
 	/// put on the wire at a metered rate.  Even sending a small amount of data (e.g.
 	/// a few MTU, say ~3k) will require some of the data to be delayed a bit.
-	/// 
+	///
 	/// Ignoring multiple lanes, the estimated delay will be approximately equal to
 	///
 	///		( m_cbPendingUnreliable+m_cbPendingReliable ) / m_nSendRateBytesPerSecond
@@ -793,13 +793,13 @@ struct SteamNetConnectionRealTimeStatus_t
 	/// This value is only valid if multiple lanes are not used.  If multiple lanes are
 	/// in use, then the queue time will be different for each lane, and you must use
 	/// the value in SteamNetConnectionRealTimeLaneStatus_t.
-	/// 
+	///
 	/// Nagle delay is ignored for the purposes of this calculation.
 	SteamNetworkingMicroseconds m_usecQueueTime;
 
 	/// Highest packet jitter experienced, since the last time this information
 	/// was returned.  (The high water mark is cleared each time you fetch the info.)
-	/// 
+	///
 	/// - The units are microseconds, although the measurement precision is usually
 	///   not nearly this precise.
 	/// - A negative value means "no data available".
@@ -1004,7 +1004,7 @@ const int k_nSteamNetworkingSend_NoDelay = 4;
 // If a message is dropped for these reasons, k_EResultIgnored will be returned.
 const int k_nSteamNetworkingSend_UnreliableNoDelay = k_nSteamNetworkingSend_Unreliable|k_nSteamNetworkingSend_NoDelay|k_nSteamNetworkingSend_NoNagle;
 
-// Reliable message send. Can send up to k_cbMaxSteamNetworkingSocketsMessageSizeSend bytes in a single message. 
+// Reliable message send. Can send up to k_cbMaxSteamNetworkingSocketsMessageSizeSend bytes in a single message.
 // Does fragmentation/re-assembly of messages under the hood, as well as a sliding window for
 // efficient sends of large chunks of data.
 //
@@ -1157,7 +1157,7 @@ enum ESteamNetworkingConfigValue
 	/// that will be buffered waiting to be processed by the application.  If this limit
 	/// is exceeded, packets will be dropped.  This is to protect us from a malicious
 	/// peer flooding us with messages faster than we can process them.
-	/// 
+	///
 	/// This must be bigger than k_ESteamNetworkingConfig_RecvMaxMessageSize
 	k_ESteamNetworkingConfig_RecvBufferSize = 47,
 
@@ -1182,7 +1182,7 @@ enum ESteamNetworkingConfigValue
 	/// The default is effectively unlimited.  If you know that you very rarely
 	/// send small packets, you can protect yourself from malicious senders by
 	/// lowering this number.
-	/// 
+	///
 	/// In particular, if you are NOT using the reliability layer and are only using
 	/// SteamNetworkingSockets for datagram transport, setting this to a very low
 	/// number may be beneficial.  (We recommend a value of 2.)  Make sure your sender
@@ -1238,7 +1238,7 @@ enum ESteamNetworkingConfigValue
 	/// queued for a delay equal to the Nagle timer value.  This is to ensure
 	/// that if the application sends several small messages rapidly, they are
 	/// coalesced into a single packet.
-	/// See historical RFC 896.  Value is in microseconds. 
+	/// See historical RFC 896.  Value is in microseconds.
 	/// Default is 5000us (5ms).
 	k_ESteamNetworkingConfig_NagleTime = 12,
 
@@ -1393,7 +1393,7 @@ enum ESteamNetworkingConfigValue
 	/// [connection int32] Send of time-since-previous-packet values in each UDP packet.
 	/// This add a small amount of packet overhead but allows for detailed jitter measurements
 	/// to be made by the receiver.
-	/// 
+	///
 	/// -  0: disables the sending
 	/// -  1: enables sending
 	/// - -1: (the default) Use the default for the connection type.  For plain UDP connections,
@@ -1635,8 +1635,8 @@ enum ESteamNetworkingConfigValue
 	/// packet, so setting this to 1 may greatly disrupt communications.
 	k_ESteamNetworkingConfig_SDRClient_ConsecutitivePingTimeoutsFailInitial = 19,
 
-	/// [global int32] If N consecutive pings to a port fail, after having received successful 
-	/// communication, mark that port as unavailable for a while, and try a 
+	/// [global int32] If N consecutive pings to a port fail, after having received successful
+	/// communication, mark that port as unavailable for a while, and try a
 	/// different one.
 	k_ESteamNetworkingConfig_SDRClient_ConsecutitivePingTimeoutsFail = 20,
 

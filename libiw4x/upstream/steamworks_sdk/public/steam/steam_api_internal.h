@@ -4,7 +4,7 @@
 //
 // You should be able to figure out how to use the SDK by reading
 // steam_api_common.h, and should not need to understand anything in here.
-// 
+//
 //-----------------------------------------------------------------------------
 
 #ifdef STEAM_CALLBACK_BEGIN
@@ -186,7 +186,7 @@ inline void CCallback< T, P, bGameserver >::Run( void *pvParam )
 #pragma pack( push, 8 )
 #else
 #error steam_api_common.h should define VALVE_CALLBACK_PACK_xxx
-#endif 
+#endif
 
 /// Internal structure used in manual callback dispatch
 struct CallbackMsg_t
@@ -203,7 +203,7 @@ struct CallbackMsg_t
 	#include "../../clientdll/steam_api_callback_inspection.h"
 #else
 	#define STEAM_CALLBACK_BEGIN( callbackname, callbackid )	struct callbackname { enum { k_iCallback = callbackid };
-	#define STEAM_CALLBACK_MEMBER( varidx, vartype, varname )	vartype varname ; 
+	#define STEAM_CALLBACK_MEMBER( varidx, vartype, varname )	vartype varname ;
 	#define STEAM_CALLBACK_MEMBER_ARRAY( varidx, vartype, varname, varcount ) vartype varname [ varcount ];
 	#define STEAM_CALLBACK_END(nArgs) };
 #endif
@@ -269,7 +269,7 @@ enum { k_iSteamControllerCallbacks = 2800 };
 enum { k_iSteamUGCCallbacks = 3400 };
 enum { k_iSteamStreamClientCallbacks = 3500 };
 enum { k_iSteamMusicCallbacks = 4000 };
-enum { k_iSteamGameNotificationCallbacks = 4400 }; 
+enum { k_iSteamGameNotificationCallbacks = 4400 };
 enum { k_iSteamHTMLSurfaceCallbacks = 4500 };
 enum { k_iSteamVideoCallbacks = 4600 };
 enum { k_iSteamInventoryCallbacks = 4700 };

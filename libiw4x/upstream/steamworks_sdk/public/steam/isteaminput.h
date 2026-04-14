@@ -1,8 +1,8 @@
 //====== Copyright 1996-2018, Valve Corporation, All rights reserved. =======
 //
-// Purpose: Steam Input is a flexible input API that supports over three hundred devices including all 
+// Purpose: Steam Input is a flexible input API that supports over three hundred devices including all
 //          common variants of Xbox, Playstation, Nintendo Switch Pro, and Steam Controllers.
-//			For more info including a getting started guide for developers 
+//			For more info including a getting started guide for developers
 //			please visit: https://partner.steamgames.com/doc/features/steam_controller
 //
 //=============================================================================
@@ -10,7 +10,7 @@
 #ifndef ISTEAMINPUT_H
 #define ISTEAMINPUT_H
 #ifdef _WIN32
-#pragma once	
+#pragma once
 #endif
 
 #include "steam_api_common.h"
@@ -109,7 +109,7 @@ enum EInputActionOrigin
 	k_EInputActionOrigin_SteamController_Reserved8,
 	k_EInputActionOrigin_SteamController_Reserved9,
 	k_EInputActionOrigin_SteamController_Reserved10,
-	
+
 	// PS4 Dual Shock
 	k_EInputActionOrigin_PS4_X,
 	k_EInputActionOrigin_PS4_Circle,
@@ -245,7 +245,7 @@ enum EInputActionOrigin
 	k_EInputActionOrigin_XBox360_DPad_North,
 	k_EInputActionOrigin_XBox360_DPad_South,
 	k_EInputActionOrigin_XBox360_DPad_West,
-	k_EInputActionOrigin_XBox360_DPad_East,	
+	k_EInputActionOrigin_XBox360_DPad_East,
 	k_EInputActionOrigin_XBox360_DPad_Move,
 	k_EInputActionOrigin_XBox360_Reserved1,
 	k_EInputActionOrigin_XBox360_Reserved2,
@@ -329,7 +329,7 @@ enum EInputActionOrigin
 	k_EInputActionOrigin_Switch_Reserved18,
 	k_EInputActionOrigin_Switch_Reserved19,
 	k_EInputActionOrigin_Switch_Reserved20,
-	
+
 	// Added in SDK 1.51
 	k_EInputActionOrigin_PS5_X,
 	k_EInputActionOrigin_PS5_Circle,
@@ -667,8 +667,8 @@ enum ESteamInputLEDFlag
 {
 	k_ESteamInputLEDFlag_SetColor,
 	// Restore the LED color to the user's preference setting as set in the controller personalization menu.
-	// This also happens automatically on exit of your game.  
-	k_ESteamInputLEDFlag_RestoreUserDefault 
+	// This also happens automatically on exit of your game.
+	k_ESteamInputLEDFlag_RestoreUserDefault
 };
 
 // These values are passed into GetGlyphPNGForActionOrigin
@@ -716,10 +716,10 @@ struct InputAnalogActionData_t
 {
 	// Type of data coming from this action, this will match what got specified in the action set
 	EInputSourceMode eMode;
-	
+
 	// The current state of this action; will be delta updates for mouse actions
 	float x, y;
-	
+
 	// Whether or not this action is currently available to be bound in the active action set
 	bool bActive;
 };
@@ -728,7 +728,7 @@ struct InputDigitalActionData_t
 {
 	// The current state of this action; will be true if currently pressed
 	bool bState;
-	
+
 	// Whether or not this action is currently available to be bound in the active action set
 	bool bActive;
 };
@@ -806,13 +806,13 @@ typedef void ( *SteamInputActionEventCallbackPointer )( SteamInputActionEvent_t 
 class ISteamInput
 {
 public:
-	
+
 	// Init and Shutdown must be called when starting/ending use of this interface.
 	// if bExplicitlyCallRunFrame is called then you will need to manually call RunFrame
 	// each frame, otherwise Steam Input will updated when SteamAPI_RunCallbacks() is called
 	virtual bool Init( bool bExplicitlyCallRunFrame ) = 0;
 	virtual bool Shutdown() = 0;
-	
+
 	// Set the absolute path to the Input Action Manifest file containing the in-game actions
 	// and file paths to the official configurations. Used in games that bundle Steam Input
 	// configurations inside of the game depot instead of using the Steam Workshop
@@ -820,7 +820,7 @@ public:
 
 	// Synchronize API state with the latest Steam Input action data available. This
 	// is performed automatically by SteamAPI_RunCallbacks, but for the absolute lowest
-	// possible latency, you call this directly before reading controller state. 
+	// possible latency, you call this directly before reading controller state.
 	// Note: This must be called from somewhere before GetConnectedControllers will
 	// return any handles
 	virtual void RunFrame( bool bReservedValue = true ) = 0;
@@ -840,11 +840,11 @@ public:
 	// handlesOut should point to a STEAM_INPUT_MAX_COUNT sized array of InputHandle_t handles
 	// Returns the number of handles written to handlesOut
 	virtual int GetConnectedControllers( STEAM_OUT_ARRAY_COUNT( STEAM_INPUT_MAX_COUNT, Receives list of connected controllers ) InputHandle_t *handlesOut ) = 0;
-	
+
 	//-----------------------------------------------------------------------------
 	// CALLBACKS
 	//-----------------------------------------------------------------------------
-	
+
 	// Controller configuration loaded - these callbacks will always fire if you have
 	// a handler. Note: this is called within either SteamInput()->RunFrame or by SteamAPI_RunCallbacks
 	STEAM_CALL_BACK( SteamInputConfigurationLoaded_t )
@@ -879,7 +879,7 @@ public:
 
 	// Lookup the handle for an Action Set. Best to do this once on startup, and store the handles for all future API calls.
 	virtual InputActionSetHandle_t GetActionSetHandle( const char *pszActionSetName ) = 0;
-	
+
 	// Reconfigure the controller to use the specified action set (ie 'Menu', 'Walk' or 'Drive')
 	// This is cheap, and can be safely called repeatedly. It's often easier to repeatedly call it in
 	// your state loops, instead of trying to place it in all of your state transitions.
@@ -902,21 +902,21 @@ public:
 
 	// Lookup the handle for a digital action. Best to do this once on startup, and store the handles for all future API calls.
 	virtual InputDigitalActionHandle_t GetDigitalActionHandle( const char *pszActionName ) = 0;
-	
+
 	// Returns the current state of the supplied digital game action
 	virtual InputDigitalActionData_t GetDigitalActionData( InputHandle_t inputHandle, InputDigitalActionHandle_t digitalActionHandle ) = 0;
-	
+
 	// Get the origin(s) for a digital action within an action set. Returns the number of origins supplied in originsOut. Use this to display the appropriate on-screen prompt for the action.
 	// originsOut should point to a STEAM_INPUT_MAX_ORIGINS sized array of EInputActionOrigin handles. The EInputActionOrigin enum will get extended as support for new controller controllers gets added to
 	// the Steam client and will exceed the values from this header, please check bounds if you are using a look up table.
 	virtual int GetDigitalActionOrigins( InputHandle_t inputHandle, InputActionSetHandle_t actionSetHandle, InputDigitalActionHandle_t digitalActionHandle, STEAM_OUT_ARRAY_COUNT( STEAM_INPUT_MAX_ORIGINS, Receives list of action origins ) EInputActionOrigin *originsOut ) = 0;
-	
+
 	// Returns a localized string (from Steam's language setting) for the user-facing action name corresponding to the specified handle
 	virtual const char *GetStringForDigitalActionName( InputDigitalActionHandle_t eActionHandle ) = 0;
 
 	// Lookup the handle for an analog action. Best to do this once on startup, and store the handles for all future API calls.
 	virtual InputAnalogActionHandle_t GetAnalogActionHandle( const char *pszActionName ) = 0;
-	
+
 	// Returns the current state of these supplied analog game action
 	virtual InputAnalogActionData_t GetAnalogActionData( InputHandle_t inputHandle, InputAnalogActionHandle_t analogActionHandle ) = 0;
 
@@ -925,15 +925,15 @@ public:
 	// the Steam client and will exceed the values from this header, please check bounds if you are using a look up table.
 	virtual int GetAnalogActionOrigins( InputHandle_t inputHandle, InputActionSetHandle_t actionSetHandle, InputAnalogActionHandle_t analogActionHandle, STEAM_OUT_ARRAY_COUNT( STEAM_INPUT_MAX_ORIGINS, Receives list of action origins ) EInputActionOrigin *originsOut ) = 0;
 
-	// Get a local path to a PNG file for the provided origin's glyph. 
+	// Get a local path to a PNG file for the provided origin's glyph.
 	virtual const char *GetGlyphPNGForActionOrigin( EInputActionOrigin eOrigin, ESteamInputGlyphSize eSize, uint32 unFlags ) = 0;
 
-	// Get a local path to a SVG file for the provided origin's glyph. 
+	// Get a local path to a SVG file for the provided origin's glyph.
 	virtual const char *GetGlyphSVGForActionOrigin( EInputActionOrigin eOrigin, uint32 unFlags ) = 0;
 
 	// Get a local path to an older, Big Picture Mode-style PNG file for a particular origin
 	virtual const char *GetGlyphForActionOrigin_Legacy( EInputActionOrigin eOrigin ) = 0;
-	
+
 	// Returns a localized string (from Steam's language setting) for the specified origin.
 	virtual const char *GetStringForActionOrigin( EInputActionOrigin eOrigin ) = 0;
 
@@ -980,7 +980,7 @@ public:
 	virtual bool ShowBindingPanel( InputHandle_t inputHandle ) = 0;
 
 	// Returns the input type for a particular handle - unlike EInputActionOrigin which update with Steam and may return unrecognized values
-	// ESteamInputType will remain static and only return valid values from your SDK version 
+	// ESteamInputType will remain static and only return valid values from your SDK version
 	virtual ESteamInputType GetInputTypeForHandle( InputHandle_t inputHandle ) = 0;
 
 	// Returns the associated controller handle for the specified emulated gamepad - can be used with the above 2 functions
@@ -989,7 +989,7 @@ public:
 
 	// Returns the associated gamepad index for the specified controller, if emulating a gamepad or -1 if not associated with an Xinput index
 	virtual int GetGamepadIndexForController( InputHandle_t ulinputHandle ) = 0;
-	
+
 	// Returns a localized string (from Steam's language setting) for the specified Xbox controller origin.
 	virtual const char *GetStringForXboxOrigin( EXboxOrigin eOrigin ) = 0;
 
@@ -1032,7 +1032,7 @@ STEAM_DEFINE_USER_INTERFACE_ACCESSOR( ISteamInput *, SteamInput, STEAMINPUT_INTE
 #pragma pack( push, 8 )
 #else
 #error steam_api_common.h should define VALVE_CALLBACK_PACK_xxx
-#endif 
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: called when a new controller has been connected, will fire once
@@ -1065,7 +1065,7 @@ struct SteamInputConfigurationLoaded_t
 	InputHandle_t	m_ulDeviceHandle;		// Handle for device
 	CSteamID		m_ulMappingCreator;		// May differ from local user when using
 											// an unmodified community or official config
-	uint32			m_unMajorRevision;		// Binding revision from In-game Action File. 
+	uint32			m_unMajorRevision;		// Binding revision from In-game Action File.
 											// Same value as queried by GetDeviceBindingRevision
 	uint32			m_unMinorRevision;
 	bool			m_bUsesSteamInputAPI;	// Does the configuration contain any Analog/Digital actions?

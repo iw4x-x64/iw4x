@@ -16,23 +16,23 @@
 // S_API defines the linkage and calling conventions for steam_api.dll exports
 #if defined( _WIN32 ) && !defined( _X360 )
 	#if defined( STEAM_API_EXPORTS )
-	#define S_API extern "C" __declspec( dllexport ) 
+	#define S_API extern "C" __declspec( dllexport )
 	#elif defined( STEAM_API_NODLL )
 	#define S_API extern "C"
 	#else
-	#define S_API extern "C" __declspec( dllimport ) 
+	#define S_API extern "C" __declspec( dllimport )
 	#endif // STEAM_API_EXPORTS
 #elif defined( __GNUC__ )
 	#if defined( STEAM_API_EXPORTS )
-	#define S_API extern "C" __attribute__ ((visibility("default"))) 
+	#define S_API extern "C" __attribute__ ((visibility("default")))
 	#else
-	#define S_API extern "C" 
+	#define S_API extern "C"
 	#endif // STEAM_API_EXPORTS
 #else // !WIN32
 	#if defined( STEAM_API_EXPORTS )
-	#define S_API extern "C"  
+	#define S_API extern "C"
 	#else
-	#define S_API extern "C" 
+	#define S_API extern "C"
 	#endif // STEAM_API_EXPORTS
 #endif
 
@@ -186,7 +186,7 @@ public:
 
 	CCallResult();
 	~CCallResult();
-	
+
 	void Set( SteamAPICall_t hAPICall, T *p, func_t func );
 	bool IsActive() const;
 	void Cancel();
@@ -224,7 +224,7 @@ public:
 
 protected:
 	virtual void Run( void *pvParam ) S_OVERRIDE;
-	
+
 	T *m_pObj;
 	func_t m_Func;
 };
