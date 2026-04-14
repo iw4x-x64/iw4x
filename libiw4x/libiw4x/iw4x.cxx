@@ -8,10 +8,10 @@
 #include <libiw4x/logger.hxx>
 #include <libiw4x/memory.hxx>
 
-#include <libiw4x/mod/mod-scheduler.hxx>
-#include <libiw4x/mod/mod-ui.hxx>
 #include <libiw4x/mod/mod-demonware.hxx>
 #include <libiw4x/mod/mod-party.hxx>
+#include <libiw4x/mod/mod-scheduler.hxx>
+#include <libiw4x/mod/mod-ui.hxx>
 
 using namespace std;
 
@@ -37,7 +37,7 @@ namespace iw4x
   // point of view, `ctx` is indistinguishable from a TU-level static object,
   // except that its construction is manually sequenced.
   //
-  alignas (context) std::byte ctx_storage [sizeof (context)];
+  alignas (context) unsigned char ctx_storage [sizeof (context)];
   context& ctx (reinterpret_cast<context&> (ctx_storage));
 
   namespace
@@ -240,6 +240,8 @@ namespace iw4x
         //
         new (&ctx_storage) context ();
 
+        // clang-format off
+
         // Built-in patches.
         //
         memwrite (0x1402A91E5, "\xB0\x01");                                     // Suppress XGameRuntimeInitialize call in WinMain
@@ -256,6 +258,8 @@ namespace iw4x
         memwrite (0x1400F85F8, 0x90, 26);                                       // Suppress CL_Live_BaseGameLicenseCheck
         memwrite (0x14012F720, "\xB8\x02\x00\x00\x00\xC3", 6);                  // Suppress GDK connection state
 
+        // clang-format on
+
         // Built-in modules.
         //
         mod::scheduler_module ();
@@ -267,6 +271,8 @@ namespace iw4x
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
+
+      // clang-format off
 
       // Construct a 64-bit absolute jump. x64 has no single instruction for
       // this, so we use `FF 25` (JMP [RIP+0]) followed by the 64-bit address.
@@ -288,6 +294,8 @@ namespace iw4x
         static_cast<unsigned char> (s >> 48 & 0xFF),
         static_cast<unsigned char> (s >> 56 & 0xFF)
       });
+
+      // clang-format on
 
       DWORD o (0);
       if (VirtualProtect (reinterpret_cast<void*> (t),
