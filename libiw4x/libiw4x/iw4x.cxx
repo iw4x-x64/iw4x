@@ -4,46 +4,22 @@
 #include <cstdint>
 #include <string>
 
-#include <libiw4x/context.hxx>
 #include <libiw4x/logger.hxx>
 #include <libiw4x/memory.hxx>
 
 #include <libiw4x/mod/oob/oob-pipeline.hxx>
 
 #include <libiw4x/mod/mod-demonware.hxx>
+#include <libiw4x/mod/mod-network.hxx>
+#include <libiw4x/mod/mod-oob.hxx>
 #include <libiw4x/mod/mod-party.hxx>
 #include <libiw4x/mod/mod-scheduler.hxx>
 #include <libiw4x/mod/mod-ui.hxx>
-#include <libiw4x/mod/mod-oob.hxx>
-#include <libiw4x/mod/mod-network.hxx>
 
 using namespace std;
 
 namespace iw4x
 {
-  // A pointer-based singleton forces the compiler to emit a load of the pointer
-  // value, followed by a dependent load of the requested member. Even when the
-  // pointer is TU-local or constant after initialization, the compiler must
-  // assume that it can be modified across translation units and therefore
-  // cannot fold the access into a single address computation.
-  //
-  // By contrast, a reference bound to an object with static storage duration
-  // gives the compiler a fixed base address. Member accesses become simple
-  // base+offset operations with no intermediate load. For IW4x, this property
-  // is relied upon in detours that execute per-frame or per-instruction, where
-  // the extra dependency chain introduced by pointer chasing is *very*
-  // observable.
-  //
-  // We therefore reserve raw storage with static duration and known alignment
-  // and later materialize the object into that storage with placement-new. The
-  // exported symbol is a reference whose address is resolved by the linker to
-  // the storage itself, not to an indirection cell. From the code generator's
-  // point of view, `ctx` is indistinguishable from a TU-level static object,
-  // except that its construction is manually sequenced.
-  //
-  alignas (context) unsigned char ctx_storage [sizeof (context)];
-  context& ctx (reinterpret_cast<context&> (ctx_storage));
-
   namespace
   {
     void
@@ -239,13 +215,6 @@ namespace iw4x
         //
         attach_console (), logger = new class logger;
 
-        // Initialize context using placement new (see ctx_storage documentation
-        // for details).
-        //
-        new (&ctx_storage) context ();
-
-        // clang-format off
-
         // Built-in patches.
         //
         memwrite (0x1402A91E5, "\xB0\x01");                                     // Suppress XGameRuntimeInitialize call in WinMain
@@ -264,8 +233,6 @@ namespace iw4x
         memwrite (0x14023D0F1, 0xEB, 1);                                        // Suppress SV_SendMessageToClient demonware fingerprint
         memwrite (0x140248b4C, 0x90, 5);                                        // Suppress SV_SendClientDatagram demonware relay notification
         memwrite (0x14023D064, 0x90, 6);                                        // Suppress playlist dvar check (?)
-
-        // clang-format on
 
         // Built-in modules.
         //
@@ -303,8 +270,6 @@ namespace iw4x
         static_cast<unsigned char> (s >> 48 & 0xFF),
         static_cast<unsigned char> (s >> 56 & 0xFF)
       });
-
-      // clang-format on
 
       DWORD o (0);
       if (VirtualProtect (reinterpret_cast<void*> (t),
