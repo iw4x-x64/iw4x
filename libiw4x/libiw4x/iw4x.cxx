@@ -8,6 +8,8 @@
 #include <libiw4x/logger.hxx>
 #include <libiw4x/memory.hxx>
 
+#include <libiw4x/mod/oob/oob-pipeline.hxx>
+
 #include <libiw4x/mod/mod-demonware.hxx>
 #include <libiw4x/mod/mod-party.hxx>
 #include <libiw4x/mod/mod-scheduler.hxx>
