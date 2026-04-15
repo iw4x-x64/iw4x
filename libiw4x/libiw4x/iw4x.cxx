@@ -261,6 +261,7 @@ namespace iw4x
         memwrite (0x1400F85F8, 0x90, 26);                                       // Suppress CL_Live_BaseGameLicenseCheck
         memwrite (0x14012F720, "\xB8\x02\x00\x00\x00\xC3", 6);                  // Suppress GDK connection state
         memwrite (0x14023D0F1, 0xEB, 1);                                        // Suppress SV_SendMessageToClient demonware fingerprint
+        memwrite (0x140248b4C, 0x90, 5);                                        // Suppress SV_SendClientDatagram demonware relay notification
 
         // clang-format on
 
