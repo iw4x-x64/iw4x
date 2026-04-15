@@ -53,7 +53,7 @@ namespace iw4x
     l->set_log_level (LogLevel::TraceL3);
 #endif
 
-    log::detail::logger () = l;
+    log::detail::logger ().store (l, std::memory_order_release);
   }
 
   logger::
@@ -61,7 +61,7 @@ namespace iw4x
   {
     // Wipe the cached logger pointer to prevent dangling references.
     //
-    log::detail::logger () = nullptr;
+    log::detail::logger ().store (nullptr, std::memory_order_release);
 
     // Halt the asynchronous logging worker thread safely.
     //
