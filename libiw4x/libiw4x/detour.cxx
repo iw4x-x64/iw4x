@@ -2,33 +2,11 @@
 
 #include <Zydis/Zydis.h>
 
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#  ifndef NOMINMAX
-#    define NOMINMAX
-#    include <sysinfoapi.h>
-#    include <memoryapi.h>
-#    undef NOMINMAX
-#  else
-#    include <sysinfoapi.h>
-#    include <memoryapi.h>
-#  endif
-#  undef WIN32_LEAN_AND_MEAN
-#else
-#  ifndef NOMINMAX
-#    define NOMINMAX
-#    include <sysinfoapi.h>
-#    include <memoryapi.h>
-#    undef NOMINMAX
-#  else
-#    include <sysinfoapi.h>
-#    include <memoryapi.h>
-#  endif
-#endif
-
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
+
+#include <libiw4x/utility-win32.hxx>
 
 using namespace std;
 
@@ -44,12 +22,21 @@ namespace iw4x
     size_t di;
     ZydisDecodedInstruction ins[max_hook_size];
     ZydisDecodedOperand ops[max_hook_size][ZYDIS_MAX_OPERAND_COUNT];
+
+    // Zero out the sizes. The arrays will be overwritten as we decode, so no
+    // need to waste cycles clearing them.
+    //
+    prologue_data ()
+      : ds (0), di (0) {}
   };
 
   struct frame_data
   {
     prologue_data p;
     void* f;
+
+    frame_data (prologue_data const& p_, void* f_)
+      : p (p_), f (f_) {}
   };
 
   struct relocation_data
@@ -57,6 +44,9 @@ namespace iw4x
     void* f;
     size_t ds;
     size_t rd;
+
+    relocation_data (void* f_, size_t ds_, size_t rd_)
+      : f (f_), ds (ds_), rd (rd_) {}
   };
 
   void
@@ -70,6 +60,10 @@ namespace iw4x
 
       prologue_data p {};
 
+      // Keep decoding until we have at least 14 bytes for our absolute jump.
+      // Note that we cannot split instructions, so we might pull in a bit more
+      // than the strict minimum.
+      //
       while (p.ds < min_hook_size && p.di < max_hook_size)
       {
         if (ZYAN_FAILED (
@@ -101,6 +95,10 @@ namespace iw4x
       uintptr_t max_a (ta < UINTPTR_MAX - max_hook_disp ? ta + max_hook_disp
                                                         : UINTPTR_MAX);
 
+      // Find an isolated memory frame close to the target function. We need to
+      // stay within 2GB for RIP-relative addressing to remain valid after
+      // relocation. Walk the page tables up and down.
+      //
       auto
       probe ([as, ag, min_a, max_a] (uintptr_t addr, bool down) -> void*
       {
@@ -143,10 +141,10 @@ namespace iw4x
       });
 
       if (void* f = probe (ta, true))
-        return frame_data {.p = p, .f = f};
+        return frame_data (p, f);
 
       if (void* f = probe (ta, false))
-        return frame_data {.p = p, .f = f};
+        return frame_data (p, f);
 
       throw runtime_error ("unable to allocate isolated address frame");
     });
@@ -161,10 +159,13 @@ namespace iw4x
       size_t rd (0);
       uint64_t ra (ta);
 
+      // Re-encode the stolen prologue instructions into our new frame. Any
+      // RIP-relative memory access needs to be adjusted because its distance
+      // to the target data has changed.
+      //
       for (size_t i (0); i < f.p.di; ++i)
       {
         ZydisEncoderRequest r {};
-
         ZydisDecodedInstruction* ri (&f.p.ins[i]);
         ZydisDecodedOperand* ro (f.p.ops[i]);
         ZyanU8 rv (ri->operand_count_visible);
@@ -182,6 +183,9 @@ namespace iw4x
             int64_t at (static_cast<int64_t> (ra + ri->length + dv));
             int64_t dr (static_cast<int64_t> (at - (fa + rd + ri->length)));
 
+            // If it falls outside the 32-bit window, the target is out of reach
+            // from our newly allocated trampoline page.
+            //
             if (dr < INT32_MIN || dr > INT32_MAX)
               throw runtime_error ("RIP-relative displacement out of range");
 
@@ -198,7 +202,7 @@ namespace iw4x
         ra += ri->length;
       }
 
-      return relocation_data {.f = f.f, .ds = f.p.ds, .rd = rd};
+      return relocation_data (f.f, f.p.ds, rd);
     });
 
     auto
@@ -231,7 +235,8 @@ namespace iw4x
       auto to (reinterpret_cast<uint8_t*> (t));
       auto fo (reinterpret_cast<uint8_t*> (r.f));
 
-      // Reintegrate trampoline to original function tail.
+      // Stitch it all together. Reintegrate trampoline to original function
+      // tail.
       //
       commit (fo + r.rd, to + r.ds);
 

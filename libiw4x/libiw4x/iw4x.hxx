@@ -1,28 +1,6 @@
 #pragma once
 
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#  ifndef NOMINMAX
-#    define NOMINMAX
-#    include <windows.h>
-#    include <psapi.h>
-#    undef NOMINMAX
-#  else
-#    include <windows.h>
-#    include <psapi.h>
-#  endif
-#  undef WIN32_LEAN_AND_MEAN
-#else
-#  ifndef NOMINMAX
-#    define NOMINMAX
-#    include <windows.h>
-#    include <psapi.h>
-#    undef NOMINMAX
-#  else
-#    include <windows.h>
-#    include <psapi.h>
-#  endif
-#endif
+#include <libiw4x/utility-win32.hxx>
 
 #include <libiw4x/export.hxx>
 
@@ -49,7 +27,3 @@ namespace iw4x
     DllMain (HINSTANCE, DWORD reason, LPVOID);
   }
 }
-
-// Linker pseudo-variable.
-//
-extern "C" IMAGE_DOS_HEADER __ImageBase;

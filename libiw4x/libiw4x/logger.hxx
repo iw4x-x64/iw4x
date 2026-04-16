@@ -68,9 +68,10 @@ namespace iw4x
 #endif
 
     template <typename T, typename S>
-    concept Streamable = requires (S& stream, T&& value)
-    {
-      { stream << std::forward<T> (value) } -> std::convertible_to<std::ostream&>;
+    concept Streamable = requires (S& stream, T&& value) {
+      {
+        stream << std::forward<T> (value)
+      } -> std::convertible_to<std::ostream&>;
     };
 
     // Accumulate stream output and flush to the logging backend upon
@@ -254,9 +255,9 @@ namespace iw4x
             };
 
             // It might be tempting to think we can skip this explicit teardown
-            // since the central logger lives for the duration of the application.
-            // However, remember that this first_arg wrapper is a temporary
-            // object instantiated for every single log statement.
+            // since the central logger lives for the duration of the
+            // application. However, remember that this first_arg wrapper is a
+            // temporary object instantiated for every single log statement.
             //
             // Because we bypassed the standard heap allocation with placement
             // new, the compiler assumes we are managing the object's lifetime
