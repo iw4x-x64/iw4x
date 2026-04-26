@@ -15,6 +15,7 @@
 #include <libiw4x/mod/mod-party.hxx>
 #include <libiw4x/mod/mod-scheduler.hxx>
 #include <libiw4x/mod/mod-ui.hxx>
+#include <libiw4x/mod/mod-menu.hxx>
 
 using namespace std;
 
@@ -242,6 +243,7 @@ namespace iw4x
         mod::party_module ();
         mod::oob_module ();
         mod::network_module ();
+        mod::menu_module ();
 
         // __scrt_common_main_seh
         //
