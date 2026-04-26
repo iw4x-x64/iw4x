@@ -4782,4 +4782,36 @@ namespace iw4x
   inline void* g_lobby   = reinterpret_cast<void*> (0x140D513A0);
   inline void* g_party   = reinterpret_cast<void*> (0x140D53740);
   inline auto* ip_socket = reinterpret_cast<uint64_t*> (0x1467E8490);
+
+  // TODO
+  //
+  // Everything below is guessed.
+  //
+
+  struct ui_context
+  {
+    char _pad_0000[0x38];
+    menu_definition* menus[640];
+    int menu_count;
+    char _pad_143c[0x4];
+    menu_definition* menu_stack[16];
+    int open_menu_count;
+  };
+
+  static_assert (sizeof(ui_context) == 5320);
+
+  using  UI_AddMenuList_t = void (*) (ui_context*, menu_list*, int);
+  inline UI_AddMenuList_t UI_AddMenuList = reinterpret_cast<UI_AddMenuList_t> (0x14026B6C0);
+
+  using  UI_FindMenuList_t = menu_list* (*) (const char* name);
+  inline UI_FindMenuList_t UI_FindMenuList = reinterpret_cast<UI_FindMenuList_t> (0x14026C830);
+
+  using  UI_GetFrontendContext_t = ui_context* (*) ();
+  inline UI_GetFrontendContext_t UI_GetFrontendContext = reinterpret_cast<UI_GetFrontendContext_t> (0x140270A60);
+
+  using  UI_GetIngameContext_t = ui_context* (*) ();
+  inline UI_GetIngameContext_t UI_GetIngameContext = reinterpret_cast<UI_GetIngameContext_t> (0x140271380);
+
+  inline ui_context* UI_FrontendContext = reinterpret_cast<ui_context*> (0x146697740);
+  inline ui_context* UI_IngameContext = reinterpret_cast<ui_context*> (0x146698C08);
 }

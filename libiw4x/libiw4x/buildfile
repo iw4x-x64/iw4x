@@ -16,6 +16,10 @@ steam_dir = $src_root/upstream/steam
 #
 discord_dir = $src_root/upstream/discord
 
+# OpenAssetTools source checkout.
+#
+oat_dir = $src_root/upstream/open-asset-tools/src
+
 if ($cxx.target.system == 'mingw32')
   cxx.libs += $steam_dir/redistributable_bin/win64/steam_api64.lib           \
               $discord_dir/redistributable_bin/win64/discord_partner_sdk.lib
@@ -520,10 +524,19 @@ hxx{version}:
 # Build options.
 #
 cxx.poptions =+ "-I$out_root" "-I$src_root" "-I$steam_dir/public"   \
-                                            "-I$discord_dir/public"
+                                            "-I$discord_dir/public" \
+                                            "-I$oat_dir"            \
+                                            "-I$oat_dir/Common"     \
+                                            "-I$oat_dir/ObjCommon"  \
+                                            "-I$oat_dir/ObjLoading" \
+                                            "-I$oat_dir/Parser"     \
+                                            "-I$oat_dir/Utils"      \
+                                            "-I$oat_dir/ZoneCommon"
 
 if ($config.libiw4x.develop)
   cxx.poptions += "-DLIBIW4X_DEVELOP"
+
+cxx.poptions += "-DARCH_x64"
 
 obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
