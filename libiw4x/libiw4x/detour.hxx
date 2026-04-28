@@ -4,7 +4,7 @@
 
 namespace iw4x
 {
-  LIBIW4X_SYMEXPORT void
+  void
   detour (void*& t, void* s);
 
   inline void

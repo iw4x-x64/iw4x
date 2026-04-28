@@ -19,12 +19,12 @@ namespace iw4x
 
     // Register a handler for a specific Steam callback ID.
     //
-    LIBIW4X_SYMEXPORT void
+    void
     register_callback (int callback_id, callback_handler handler);
 
     // Unregister all handlers currently associated with the given id.
     //
-    LIBIW4X_SYMEXPORT void
+    void
     unregister_callback (int callback_id);
 
     // Dispatch a callback to all registered handlers for this id.
@@ -33,7 +33,7 @@ namespace iw4x
     // machinery. It is generally not intended to be invoked directly from the
     // outside.
     //
-    LIBIW4X_SYMEXPORT void
+    void
     dispatch_callback (int callback_id, void* data);
   }
 }

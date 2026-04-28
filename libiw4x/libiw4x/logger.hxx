@@ -17,7 +17,7 @@
 
 namespace iw4x
 {
-  class LIBIW4X_SYMEXPORT logger
+  class logger
   {
   public:
     logger ();
@@ -189,7 +189,7 @@ namespace iw4x
       // signature. Instead, we capture the call site location during the
       // implicit conversion of the right-hand operand.
       //
-      // That is, when evaluating 'error << "foo"', overload resolution selects
+      // That is, when evaluating 'log::error << "foo"', overload resolution selects
       // an operator<< that accepts this wrapper type. The compiler performs an
       // implicit conversion of the operand, invoking the wrapper's templated
       // constructor which specifies std::source_location::current () as a

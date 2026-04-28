@@ -26,12 +26,12 @@ namespace iw4x
     // in this namespace. It returns true if SteamAPI_InitFlat() succeeds and we
     // are able to acquire all the necessary interface pointers.
     //
-    LIBIW4X_SYMEXPORT bool
+    bool
     initialize ();
 
     // Shut down the runtime.
     //
-    LIBIW4X_SYMEXPORT void
+    void
     shutdown ();
 
     // Pump the Steamworks callback machinery.
@@ -40,29 +40,29 @@ namespace iw4x
     // scheduler. It runs a single iteration of the manual dispatch loop to
     // ensure all pending callbacks and asynchronous results are delivered.
     //
-    LIBIW4X_SYMEXPORT void
+    void
     pump_callbacks ();
 
     // Cached interface accessors.
     //
-    LIBIW4X_SYMEXPORT ISteamUser*
+    ISteamUser*
     user () noexcept;
 
-    LIBIW4X_SYMEXPORT ISteamFriends*
+    ISteamFriends*
     friends () noexcept;
 
-    LIBIW4X_SYMEXPORT ISteamMatchmaking*
+    ISteamMatchmaking*
     matchmaking () noexcept;
 
-    LIBIW4X_SYMEXPORT ISteamUtils*
+    ISteamUtils*
     utils () noexcept;
 
-    LIBIW4X_SYMEXPORT HSteamPipe
+    HSteamPipe
     pipe () noexcept;
 
     // Local player's Steam ID.
     //
-    LIBIW4X_SYMEXPORT steam_id
+    steam_id
     local_id () noexcept;
   }
 }

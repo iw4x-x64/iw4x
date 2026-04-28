@@ -299,7 +299,7 @@ namespace iw4x
   // Note that ownership is claimed implicitly on the first call to tick()
   // and asserted on every subsequent call.
   //
-  class LIBIW4X_SYMEXPORT logical_scheduler
+  class logical_scheduler
   {
   public:
     logical_scheduler ();
@@ -610,7 +610,7 @@ namespace iw4x
       }
     };
 
-    LIBIW4X_SYMEXPORT boost::asio::io_context&
+    boost::asio::io_context&
     get_io_context ();
 
     inline void
