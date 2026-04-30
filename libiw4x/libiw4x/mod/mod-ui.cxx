@@ -95,6 +95,17 @@ namespace iw4x
           "@PLATFORM_PLAY_ONLINE_CAPS",
           {
             "play mouse_click",
+            "execnow nosplitscreen",
+            "exec xrequirelivesignin",
+            "setdvar systemlink 0",
+            "setdvar splitscreen 0",
+            "setdvar onlinegame 1",
+            "exec default_xboxlive.cfg",
+            "exec party_maxplayers 9",
+            "exec xblive_privatematch 0",
+            "exec xblive_rankedmatch 0",
+            "exec xstartprivateparty",
+            "setdvar ui_mptype 0",
             "open menu_xboxlive"
           }
         );
