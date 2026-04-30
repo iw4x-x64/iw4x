@@ -50,7 +50,7 @@ namespace iw4x
       //
       random_device rd;
       seed_seq ss {rd (), rd (), rd (), rd ()};
-      independent_bits_engine<mt19937_64, 8, unsigned char> r (ss);
+      independent_bits_engine<mt19937_64, 8, uint32_t> r (ss);
 
       ranges::generate (auth_ticket.session_key, std::ref (r));
       ranges::generate (auth_ticket.ticket_data, std::ref (r));
