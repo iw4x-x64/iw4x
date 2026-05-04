@@ -438,6 +438,13 @@ namespace iw4x
     NUMBER_OF_DATA_TYPES = 0x4,
   };
 
+  enum ui_local_variable_type
+  {
+    UI_LOCAL_VARIABLE_INTEGER = 0x0,
+    UI_LOCAL_VARIABLE_FLOAT = 0x1,
+    UI_LOCAL_VARIABLE_STRING = 0x2,
+  };
+
   // 249
   //
   enum leaderboard_column_type
@@ -4596,6 +4603,57 @@ namespace iw4x
     int last_entity_reference;
   };
 
+  /* 1591 */
+  struct ui_local_variable
+  {
+    ui_local_variable_type type;
+    const char* name;
+
+    /* 1590 */
+    union
+    {
+      int integer;
+      float value;
+      const char* string;
+    } u;
+  };
+
+  /* 1592 */
+  struct ui_local_variable_context
+  {
+    ui_local_variable table [256];
+  };
+
+  /* 1593 */
+  struct ui_context
+  {
+    int local_client_number;
+    float bias;
+    int real_time;
+    int frame_time;
+
+    /* 1589 */
+    struct
+    {
+      float x;
+      float y;
+      int last_move_time;
+    } cursor;
+
+    int is_cursor_visible;
+    int paint_full;
+    int screen_width;
+    int screen_height;
+    float screen_aspect;
+    float frames_per_second;
+    float blur_radius_out;
+    menu_definition* menus [640];
+    int menu_count;
+    menu_definition* menu_stack [16];
+    int open_menu_count;
+    ui_local_variable_context local_variables;
+  };
+
   // 2096
   //
   struct script_string_list
@@ -4641,112 +4699,17 @@ namespace iw4x
     xasset_entry_pool_entry* next;
   };
 
-  // Internal symbols
-  //
-  using  Com_Frame_Try_Block_Function_t = int64_t (*) ();
-  inline Com_Frame_Try_Block_Function_t Com_Frame_Try_Block_Function = reinterpret_cast<Com_Frame_Try_Block_Function_t> (0x1401F9930);
-
-  using  CL_LocalClientNumFromControllerIndex_t = __int64 (*) (void);
-  inline CL_LocalClientNumFromControllerIndex_t CL_LocalClientNumFromControllerIndex = reinterpret_cast<CL_LocalClientNumFromControllerIndex_t> (0x1400EF8F0);
-
-  using  DB_FindXAssetHeader_t = xasset_header (*) (xasset_type, const char* name);
-  inline DB_FindXAssetHeader_t DB_FindXAssetHeader = reinterpret_cast<DB_FindXAssetHeader_t> (0x140129220);
-
-  using  LiveStorage_IsWaitingOnPlaylists_t = bool (*) ();
-  inline LiveStorage_IsWaitingOnPlaylists_t LiveStorage_IsWaitingOnPlaylists = reinterpret_cast<LiveStorage_IsWaitingOnPlaylists_t> (0x1402AA9B0);
-
-  using  LiveStorage_FetchPlaylists_t = void (*) (int controller_index);
-  inline LiveStorage_FetchPlaylists_t LiveStorage_FetchPlaylists = reinterpret_cast<LiveStorage_FetchPlaylists_t> (0x1402AA840);
-
-  using  Playlist_ParsePlaylists_t = int64_t (*) (uint8_t*);
-  inline Playlist_ParsePlaylists_t Playlist_ParsePlaylists = reinterpret_cast<Playlist_ParsePlaylists_t> (0x14025D460);
-
-  using  Playlist_ValidatePlaylistNum_t = void (*) (void);
-  inline Playlist_ValidatePlaylistNum_t Playlist_ValidatePlaylistNum = reinterpret_cast<Playlist_ValidatePlaylistNum_t> (0x14025E250);
-
-  using  Live_SetPlaylistVersion_t = int64_t (*) (void);
-  inline Live_SetPlaylistVersion_t Live_SetPlaylistVersion = reinterpret_cast<Live_SetPlaylistVersion_t> (0x1402A7300);
-
-  using  LiveStorage_IsWaitingOnStats_t = char (*) (__int64);
-  inline LiveStorage_IsWaitingOnStats_t LiveStorage_IsWaitingOnStats = reinterpret_cast<LiveStorage_IsWaitingOnStats_t> (0x1401FE130);
-
-  using  Cbuf_ExecuteBuffer_t = void (*) (unsigned int, unsigned int, uint8_t *);
-  inline Cbuf_ExecuteBuffer_t Cbuf_ExecuteBuffer = reinterpret_cast<Cbuf_ExecuteBuffer_t> (0x1401EC780);
-
-  using  Com_Error_t = void (*) (int, const char *, ...);
-  inline Com_Error_t Com_Error = reinterpret_cast<Com_Error_t> (0x1401F8FD0);
-
-  using  Com_ErrorEntered_t = bool (*) (void);
-  inline Com_ErrorEntered_t Com_ErrorEntered = reinterpret_cast<Com_ErrorEntered_t> (0x1401F9620);
-
-  using  Live_ThrowError_t = void (*) (int, const char *);
-  inline Live_ThrowError_t Live_ThrowError = reinterpret_cast<Live_ThrowError_t> (0x1402A7600);
-
-  using  Live_Frame_t = void (*) (unsigned int);
-  inline Live_Frame_t Live_Frame = reinterpret_cast<Live_Frame_t> (0x1402A6040);
-
-  using  bdLogMessage_t = void (*) (int, const char*, const char*, const char*, const char*, int, const char*, ...);
-  inline bdLogMessage_t bdLogMessage = reinterpret_cast<bdLogMessage_t> (0x140331F60);
-
-  using  IWNet_Frame_t = void (*) (int);
-  inline IWNet_Frame_t IWNet_Frame = reinterpret_cast<IWNet_Frame_t> (0x14012DF70);
-
-  using  Uk_OnConnected_t = void (*) (int);
-  inline Uk_OnConnected_t Uk_OnConnected = reinterpret_cast<Uk_OnConnected_t> (0x1402A6850);
-
-  using  DW_SendPush_t = void (*) ();
-  inline DW_SendPush_t DW_SendPush = reinterpret_cast<DW_SendPush_t> (0x14012ED70);
-
-  using  LiveStorage_DownloadStatsFromDir_t = void (*) (int);
-  inline LiveStorage_DownloadStatsFromDir_t LiveStorage_DownloadStatsFromDir = reinterpret_cast<LiveStorage_DownloadStatsFromDir_t> (0x140133F00);
-
-  using  ClientConnect_t = void * (*) (int, __int16);
-  inline ClientConnect_t ClientConnect = reinterpret_cast<ClientConnect_t> (0x14019A470);
-
-  using  CL_ConnectFromParty_t = void (*) (int controller_index, xsession_information* session, network_address address, int, int, const char* mapname, const char* gametype);
-  inline CL_ConnectFromParty_t CL_ConnectFromParty = reinterpret_cast<CL_ConnectFromParty_t> (0x1400F5220);
-
-  using  CL_DispatchConnectionlessPacket_t = void (*) (int local_client_num, network_address* from, message* msg);
-  inline CL_DispatchConnectionlessPacket_t CL_DispatchConnectionlessPacket = reinterpret_cast<CL_DispatchConnectionlessPacket_t> (0x1400F5FE0);
-
-  using  NET_OutOfBandPrint_t = void (*) (int sock, network_address* address, const char* format, ...);
-  inline NET_OutOfBandPrint_t NET_OutOfBandPrint = reinterpret_cast<NET_OutOfBandPrint_t> (0x140209FC0);
-
-  using  Dvar_FindVar_t = dvar* (*) (const char* name);
-  inline Dvar_FindVar_t Dvar_FindVar = reinterpret_cast<Dvar_FindVar_t> (0x140287170);
-
-  using  Dvar_SetFromStringByName_t = dvar* (*) (const char* name, const char* value);
-  inline Dvar_SetFromStringByName_t Dvar_SetFromStringByName = reinterpret_cast<Dvar_SetFromStringByName_t> (0x140289570);
-
-  using  Live_StartPrivateParty_t = void (*) (int controller_index);
-  inline Live_StartPrivateParty_t Live_StartPrivateParty = reinterpret_cast<Live_StartPrivateParty_t> (0x1400FABC0);
-
-  using  Party_SetState_t = void (*) (void* party, int state);
-  inline Party_SetState_t Party_SetState = reinterpret_cast<Party_SetState_t> (0x140105570);
-
-  using  NET_SendPacket_t = bool (*) (int sock, int length, const char* data, network_address address);
-  inline NET_SendPacket_t NET_SendPacket = reinterpret_cast<NET_SendPacket_t> (0x14020A040);
-
-  using  SV_ConnectionlessPacket_t = void (*) (network_address* from, message* msg);
-  inline SV_ConnectionlessPacket_t SV_ConnectionlessPacket = reinterpret_cast<SV_ConnectionlessPacket_t> (0x140240090);
-
-  using  Dvar_RegisterBool_t = dvar* (*) (const char* name, bool value, unsigned int flags, const char* description);
-  inline Dvar_RegisterBool_t Dvar_RegisterBool = reinterpret_cast<Dvar_RegisterBool_t> (0x140287CE0);
-
-  using  Dvar_RegisterString_t = dvar* (*) (const char* name, const char* value, unsigned int flags, const char* description);
-  inline Dvar_RegisterString_t Dvar_RegisterString = reinterpret_cast<Dvar_RegisterString_t> (0x140288590);
-
-  using  SV_GameSendServerCommand_t = void (*) (int client_num, int cmd_type, const char* text);
-  inline SV_GameSendServerCommand_t SV_GameSendServerCommand = reinterpret_cast<SV_GameSendServerCommand_t> (0x1402369B0);
-
-  using  Sys_SendPacket_t = bool (*) (size_t len, const char *buf, const network_address *a3);
-  inline Sys_SendPacket_t Sys_SendPacket = reinterpret_cast<Sys_SendPacket_t> (0x1402AA1B0);
+  using  bdAlloc_t = void* (*) (size_t);
+  inline bdAlloc_t bdAlloc = reinterpret_cast<bdAlloc_t> (0x140315420);
 
   using  bdBandwidthTestClientInit_t = bool (*) (void*);
   inline bdBandwidthTestClientInit_t bdBandwidthTestClientInit = reinterpret_cast<bdBandwidthTestClientInit_t> (0x140321560);
 
   using  bdBandwidthTestClientStart_t = void (*) (void*, int);
   inline bdBandwidthTestClientStart_t bdBandwidthTestClientStart = reinterpret_cast<bdBandwidthTestClientStart_t> (0x140322260);
+
+  using  bdLobbyConnectionStartTask_t = int32_t (*) (void*, void**, uint8_t, uint8_t, void*, float);
+  inline bdLobbyConnectionStartTask_t bdLobbyConnectionStartTask = reinterpret_cast<bdLobbyConnectionStartTask_t> (0x140322CC0);
 
   using  bdLobbyService_t /* guessed */ = void* (*) ();
   inline bdLobbyService_t bdLobbyService = reinterpret_cast<bdLobbyService_t> (0x140136210);
@@ -4757,65 +4720,138 @@ namespace iw4x
   using  bdLobbyServiceImplDisconnect_t = void (*) (void*, int);
   inline bdLobbyServiceImplDisconnect_t bdLobbyServiceImplDisconnect = reinterpret_cast<bdLobbyServiceImplDisconnect_t> (0x14031c950);
 
-  using  bdLobbyServiceImplGetStatus_t = int32_t (*) (void*);
-  inline bdLobbyServiceImplGetStatus_t bdLobbyServiceImplGetStatus = reinterpret_cast<bdLobbyServiceImplGetStatus_t> (0x14031cb10);
-
   using  bdLobbyServiceImplGetMatchmaking_t = void* (*) (void*);
   inline bdLobbyServiceImplGetMatchmaking_t bdLobbyServiceImplGetMatchmaking = reinterpret_cast<bdLobbyServiceImplGetMatchmaking_t> (0x14031c990);
-
-  using  bdLobbyServiceImplGetTaskMgr_t = void* (*) (void*);
-  inline bdLobbyServiceImplGetTaskMgr_t bdLobbyServiceImplGetTaskMgr = reinterpret_cast<bdLobbyServiceImplGetTaskMgr_t> (0x14031CA30);
 
   using  bdLobbyServiceImplGetPerformance_t = void* (*) (void*);
   inline bdLobbyServiceImplGetPerformance_t bdLobbyServiceImplGetPerformance = reinterpret_cast<bdLobbyServiceImplGetPerformance_t> (0x14031ca70);
 
+  using  bdLobbyServiceImplGetStatus_t = int32_t (*) (void*);
+  inline bdLobbyServiceImplGetStatus_t bdLobbyServiceImplGetStatus = reinterpret_cast<bdLobbyServiceImplGetStatus_t> (0x14031cb10);
+
   using  bdLobbyServiceImplGetStorage_t = void* (*) (void*);
   inline bdLobbyServiceImplGetStorage_t bdLobbyServiceImplGetStorage = reinterpret_cast<bdLobbyServiceImplGetStorage_t> (0x14031cff0);
 
-  using  bdAlloc_t = void* (*) (size_t);
-  inline bdAlloc_t bdAlloc = reinterpret_cast<bdAlloc_t> (0x140315420);
+  using  bdLobbyServiceImplGetTaskMgr_t = void* (*) (void*);
+  inline bdLobbyServiceImplGetTaskMgr_t bdLobbyServiceImplGetTaskMgr = reinterpret_cast<bdLobbyServiceImplGetTaskMgr_t> (0x14031CA30);
 
-  using  bdLobbyConnectionStartTask_t = int32_t (*) (void*, void**, uint8_t, uint8_t, void*, float);
-  inline bdLobbyConnectionStartTask_t bdLobbyConnectionStartTask = reinterpret_cast<bdLobbyConnectionStartTask_t> (0x140322CC0);
+  using  bdLogMessage_t = void (*) (int, const char*, const char*, const char*, const char*, int, const char*, ...);
+  inline bdLogMessage_t bdLogMessage = reinterpret_cast<bdLogMessage_t> (0x140331F60);
+
+  using  Cbuf_ExecuteBuffer_t = void (*) (unsigned int, unsigned int, uint8_t *);
+  inline Cbuf_ExecuteBuffer_t Cbuf_ExecuteBuffer = reinterpret_cast<Cbuf_ExecuteBuffer_t> (0x1401EC780);
+
+  using  CL_ConnectFromParty_t = void (*) (int controller_index, xsession_information* session, network_address address, int, int, const char* mapname, const char* gametype);
+  inline CL_ConnectFromParty_t CL_ConnectFromParty = reinterpret_cast<CL_ConnectFromParty_t> (0x1400F5220);
+
+  using  CL_DispatchConnectionlessPacket_t = void (*) (int local_client_num, network_address* from, message* msg);
+  inline CL_DispatchConnectionlessPacket_t CL_DispatchConnectionlessPacket = reinterpret_cast<CL_DispatchConnectionlessPacket_t> (0x1400F5FE0);
+
+  using  CL_LocalClientNumFromControllerIndex_t = __int64 (*) (void);
+  inline CL_LocalClientNumFromControllerIndex_t CL_LocalClientNumFromControllerIndex = reinterpret_cast<CL_LocalClientNumFromControllerIndex_t> (0x1400EF8F0);
+
+  using  ClientConnect_t = void * (*) (int, __int16);
+  inline ClientConnect_t ClientConnect = reinterpret_cast<ClientConnect_t> (0x14019A470);
+
+  using  Com_Error_t = void (*) (int, const char *, ...);
+  inline Com_Error_t Com_Error = reinterpret_cast<Com_Error_t> (0x1401F8FD0);
+
+  using  Com_ErrorEntered_t = bool (*) (void);
+  inline Com_ErrorEntered_t Com_ErrorEntered = reinterpret_cast<Com_ErrorEntered_t> (0x1401F9620);
+
+  using  Com_Frame_Try_Block_Function_t = int64_t (*) ();
+  inline Com_Frame_Try_Block_Function_t Com_Frame_Try_Block_Function = reinterpret_cast<Com_Frame_Try_Block_Function_t> (0x1401F9930);
+
+  using  DB_FindXAssetHeader_t = xasset_header (*) (xasset_type, const char* name);
+  inline DB_FindXAssetHeader_t DB_FindXAssetHeader = reinterpret_cast<DB_FindXAssetHeader_t> (0x140129220);
+
+  using  Dvar_FindVar_t = dvar* (*) (const char* name);
+  inline Dvar_FindVar_t Dvar_FindVar = reinterpret_cast<Dvar_FindVar_t> (0x140287170);
+
+  using  Dvar_RegisterBool_t = dvar* (*) (const char* name, bool value, unsigned int flags, const char* description);
+  inline Dvar_RegisterBool_t Dvar_RegisterBool = reinterpret_cast<Dvar_RegisterBool_t> (0x140287CE0);
+
+  using  Dvar_RegisterString_t = dvar* (*) (const char* name, const char* value, unsigned int flags, const char* description);
+  inline Dvar_RegisterString_t Dvar_RegisterString = reinterpret_cast<Dvar_RegisterString_t> (0x140288590);
+
+  using  Dvar_SetFromStringByName_t = dvar* (*) (const char* name, const char* value);
+  inline Dvar_SetFromStringByName_t Dvar_SetFromStringByName = reinterpret_cast<Dvar_SetFromStringByName_t> (0x140289570);
+
+  using  DW_SendPush_t = void (*) ();
+  inline DW_SendPush_t DW_SendPush = reinterpret_cast<DW_SendPush_t> (0x14012ED70);
+
+  using  IWNet_Frame_t = void (*) (int);
+  inline IWNet_Frame_t IWNet_Frame = reinterpret_cast<IWNet_Frame_t> (0x14012DF70);
+
+  using  Live_Frame_t = void (*) (unsigned int);
+  inline Live_Frame_t Live_Frame = reinterpret_cast<Live_Frame_t> (0x1402A6040);
+
+  using  Live_SetPlaylistVersion_t = int64_t (*) (void);
+  inline Live_SetPlaylistVersion_t Live_SetPlaylistVersion = reinterpret_cast<Live_SetPlaylistVersion_t> (0x1402A7300);
+
+  using  Live_StartPrivateParty_t = void (*) (int controller_index);
+  inline Live_StartPrivateParty_t Live_StartPrivateParty = reinterpret_cast<Live_StartPrivateParty_t> (0x1400FABC0);
+
+  using  Live_ThrowError_t = void (*) (int, const char *);
+  inline Live_ThrowError_t Live_ThrowError = reinterpret_cast<Live_ThrowError_t> (0x1402A7600);
+
+  using  LiveStorage_DownloadStatsFromDir_t = void (*) (int);
+  inline LiveStorage_DownloadStatsFromDir_t LiveStorage_DownloadStatsFromDir = reinterpret_cast<LiveStorage_DownloadStatsFromDir_t> (0x140133F00);
+
+  using  LiveStorage_FetchPlaylists_t = void (*) (int controller_index);
+  inline LiveStorage_FetchPlaylists_t LiveStorage_FetchPlaylists = reinterpret_cast<LiveStorage_FetchPlaylists_t> (0x1402AA840);
+
+  using  LiveStorage_IsWaitingOnPlaylists_t = bool (*) ();
+  inline LiveStorage_IsWaitingOnPlaylists_t LiveStorage_IsWaitingOnPlaylists = reinterpret_cast<LiveStorage_IsWaitingOnPlaylists_t> (0x1402AA9B0);
+
+  using  LiveStorage_IsWaitingOnStats_t = char (*) (__int64);
+  inline LiveStorage_IsWaitingOnStats_t LiveStorage_IsWaitingOnStats = reinterpret_cast<LiveStorage_IsWaitingOnStats_t> (0x1401FE130);
+
+  using  NET_OutOfBandPrint_t = void (*) (int sock, network_address* address, const char* format, ...);
+  inline NET_OutOfBandPrint_t NET_OutOfBandPrint = reinterpret_cast<NET_OutOfBandPrint_t> (0x140209FC0);
+
+  using  NET_SendPacket_t = bool (*) (int sock, int length, const char* data, network_address address);
+  inline NET_SendPacket_t NET_SendPacket = reinterpret_cast<NET_SendPacket_t> (0x14020A040);
+
+  using  Party_SetState_t = void (*) (void* party, int state);
+  inline Party_SetState_t Party_SetState = reinterpret_cast<Party_SetState_t> (0x140105570);
+
+  using  Playlist_ParsePlaylists_t = int64_t (*) (uint8_t*);
+  inline Playlist_ParsePlaylists_t Playlist_ParsePlaylists = reinterpret_cast<Playlist_ParsePlaylists_t> (0x14025D460);
+
+  using  Playlist_ValidatePlaylistNum_t = void (*) (void);
+  inline Playlist_ValidatePlaylistNum_t Playlist_ValidatePlaylistNum = reinterpret_cast<Playlist_ValidatePlaylistNum_t> (0x14025E250);
 
   using  R_LoadGraphicsAssets_t = void (*) (void);
   inline R_LoadGraphicsAssets_t R_LoadGraphicsAssets = reinterpret_cast<R_LoadGraphicsAssets_t> (0x14002FA70);
+
+  using  SV_ConnectionlessPacket_t = void (*) (network_address* from, message* msg);
+  inline SV_ConnectionlessPacket_t SV_ConnectionlessPacket = reinterpret_cast<SV_ConnectionlessPacket_t> (0x140240090);
+
+  using  SV_GameSendServerCommand_t = void (*) (int client_num, int cmd_type, const char* text);
+  inline SV_GameSendServerCommand_t SV_GameSendServerCommand = reinterpret_cast<SV_GameSendServerCommand_t> (0x1402369B0);
+
+  using  Sys_SendPacket_t = bool (*) (size_t len, const char *buf, const network_address *a3);
+  inline Sys_SendPacket_t Sys_SendPacket = reinterpret_cast<Sys_SendPacket_t> (0x1402AA1B0);
+
+  using  UI_AddMenuList_t = void (*) (ui_context*, menu_list*, int);
+  inline UI_AddMenuList_t UI_AddMenuList = reinterpret_cast<UI_AddMenuList_t> (0x14026B6C0);
+
+  using  UI_GetClientDC_t = ui_context* (*) ();
+  inline UI_GetClientDC_t UI_GetClientDC = reinterpret_cast<UI_GetClientDC_t> (0x140271380);
+
+  using  UI_GetFrontendContext_t = ui_context* (*) ();
+  inline UI_GetFrontendContext_t UI_GetFrontendContext = reinterpret_cast<UI_GetFrontendContext_t> (0x140270A60);
+
+  using  UI_LoadMenus_t = menu_list* (*) (const char* name);
+  inline UI_LoadMenus_t UI_LoadMenus = reinterpret_cast<UI_LoadMenus_t> (0x14026C830);
+
+  using  Uk_OnConnected_t = void (*) (int);
+  inline Uk_OnConnected_t Uk_OnConnected = reinterpret_cast<Uk_OnConnected_t> (0x1402A6850);
 
   // Internal globals
   //
   inline void* g_lobby   = reinterpret_cast<void*> (0x140D513A0);
   inline void* g_party   = reinterpret_cast<void*> (0x140D53740);
   inline auto* ip_socket = reinterpret_cast<uint64_t*> (0x1467E8490);
-
-  // TODO
-  //
-  // Everything below is guessed.
-  //
-
-  struct ui_context
-  {
-    char _pad_0000[0x38];
-    menu_definition* menus[640];
-    int menu_count;
-    char _pad_143c[0x4];
-    menu_definition* menu_stack[16];
-    int open_menu_count;
-  };
-
-  static_assert (sizeof(ui_context) == 5320);
-
-  using  UI_AddMenuList_t = void (*) (ui_context*, menu_list*, int);
-  inline UI_AddMenuList_t UI_AddMenuList = reinterpret_cast<UI_AddMenuList_t> (0x14026B6C0);
-
-  using  UI_FindMenuList_t = menu_list* (*) (const char* name);
-  inline UI_FindMenuList_t UI_FindMenuList = reinterpret_cast<UI_FindMenuList_t> (0x14026C830);
-
-  using  UI_GetFrontendContext_t = ui_context* (*) ();
-  inline UI_GetFrontendContext_t UI_GetFrontendContext = reinterpret_cast<UI_GetFrontendContext_t> (0x140270A60);
-
-  using  UI_GetIngameContext_t = ui_context* (*) ();
-  inline UI_GetIngameContext_t UI_GetIngameContext = reinterpret_cast<UI_GetIngameContext_t> (0x140271380);
-
-  inline ui_context* UI_FrontendContext = reinterpret_cast<ui_context*> (0x146697740);
-  inline ui_context* UI_IngameContext = reinterpret_cast<ui_context*> (0x146698C08);
 }

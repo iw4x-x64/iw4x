@@ -130,7 +130,7 @@ namespace iw4x
       std::array<ui_context*, 2>
       ui_contexts ()
       {
-        return {UI_GetFrontendContext (), UI_GetIngameContext ()};
+        return {UI_GetFrontendContext (), UI_GetClientDC ()};
       }
 
       bool
@@ -550,7 +550,7 @@ namespace iw4x
           }
           case reload_stage::wait_for_cgame_initialization:
           {
-            if (bounded_menu_count (UI_GetIngameContext ()) > 0)
+            if (bounded_menu_count (UI_GetClientDC ()) > 0)
             {
               reload_disk_menus (reload_pass::cgame_initialization);
               startup_reload_stage = reload_stage::complete;
