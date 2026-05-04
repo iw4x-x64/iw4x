@@ -846,8 +846,8 @@ namespace iw4x
     bool enabled;
     int integer;
     unsigned int unsigned_integer;
-    std::int64_t  integer64;
-    std::uint64_t unsigned_integer64;
+    std::int64_t  integer_64;
+    std::uint64_t unsigned_integer_64;
     float value;
     vec4_t vector[4];
     const char* string;
@@ -869,6 +869,18 @@ namespace iw4x
       int minimum;
       int maximum;
     } integer;
+
+    struct
+    {
+      std::int64_t minimum;
+      std::int64_t maximum;
+    } integer_64;
+
+    struct
+    {
+      std::uint64_t minimum;
+      std::uint64_t maximum;
+    } unsigned_integer_64;
 
     struct
     {
@@ -4680,6 +4692,18 @@ namespace iw4x
     void* data;
   };
 
+  // 1303
+  //
+  struct command_function_s
+  {
+    command_function_s *next;
+    const char *name;
+    const char *auto_complete_directory;
+    const char *auto_complete_extension;
+    void (__cdecl *function)();
+    int flags;
+  };
+
   // 1315
   //
   struct network_address
@@ -4898,8 +4922,14 @@ namespace iw4x
   using  CL_LocalClientNumFromControllerIndex_t = __int64 (*) (void);
   inline CL_LocalClientNumFromControllerIndex_t CL_LocalClientNumFromControllerIndex = reinterpret_cast<CL_LocalClientNumFromControllerIndex_t> (0x1400EF8F0);
 
+  using  CL_SelectStringTableEntryInDvar_f_t = void (__fastcall *) (void);
+  inline CL_SelectStringTableEntryInDvar_f_t CL_SelectStringTableEntryInDvar_f = reinterpret_cast<CL_SelectStringTableEntryInDvar_f_t> (0x14026DD30);
+
   using  ClientConnect_t = void * (*) (int, __int16);
   inline ClientConnect_t ClientConnect = reinterpret_cast<ClientConnect_t> (0x14019A470);
+
+  using  Cmd_AddCommandInternal_t = void (*) (const char *cmdName, void (__fastcall *function)(), command_function_s *allocedCmd);
+  inline Cmd_AddCommandInternal_t Cmd_AddCommandInternal = reinterpret_cast<Cmd_AddCommandInternal_t> (0x1401EC990);
 
   using  Com_Error_t = void (*) (int, const char *, ...);
   inline Com_Error_t Com_Error = reinterpret_cast<Com_Error_t> (0x1401F8FD0);
@@ -4916,20 +4946,182 @@ namespace iw4x
   using  DB_FindXAssetHeader_t = xasset_header (*) (xasset_type, const char* name);
   inline DB_FindXAssetHeader_t DB_FindXAssetHeader = reinterpret_cast<DB_FindXAssetHeader_t> (0x140129220);
 
+  using  Dvar_AddCommands_t = void (*) (void);
+  inline Dvar_AddCommands_t Dvar_AddCommands = reinterpret_cast<Dvar_AddCommands_t> (0x140200EE0);
+
+  using  Dvar_AddFlags_t = void (*) (dvar *dvar, dvar_flags flags);
+  inline Dvar_AddFlags_t Dvar_AddFlags = reinterpret_cast<Dvar_AddFlags_t> (0x140286A80);
+
+  using  Dvar_AssignCurrentStringValue_t = void (*) (dvar *dvar, dvar_value *dest, const char *string);
+  inline Dvar_AssignCurrentStringValue_t Dvar_AssignCurrentStringValue = reinterpret_cast<Dvar_AssignCurrentStringValue_t> (0x140286B60);
+
+  using  Dvar_AssignResetStringValue_t = void (*) (dvar *dvar, dvar_value *dest, const char *string);
+  inline Dvar_AssignResetStringValue_t Dvar_AssignResetStringValue = reinterpret_cast<Dvar_AssignResetStringValue_t> (0x140286C10);
+
+  using  Dvar_ClearModified_t = void (*) (dvar *dvar);
+  inline Dvar_ClearModified_t Dvar_ClearModified = reinterpret_cast<Dvar_ClearModified_t> (0x140286FA0);
+
+  using  Dvar_Command_t = int (*) (void);
+  inline Dvar_Command_t Dvar_Command = reinterpret_cast<Dvar_Command_t> (0x140200F90);
+
+  using  Dvar_DisplayableValue_t = const char * (*) (dvar *dvar);
+  inline Dvar_DisplayableValue_t Dvar_DisplayableValue = reinterpret_cast<Dvar_DisplayableValue_t> (0x140286FF0);
+
+  using  Dvar_FindMalleableVar_t = dvar * (*) (const char *dvarName);
+  inline Dvar_FindMalleableVar_t Dvar_FindMalleableVar = reinterpret_cast<Dvar_FindMalleableVar_t> (0x140287080);
+
   using  Dvar_FindVar_t = dvar* (*) (const char* name);
   inline Dvar_FindVar_t Dvar_FindVar = reinterpret_cast<Dvar_FindVar_t> (0x140287170);
+
+  using  Dvar_GetBool_t = bool (*) (const char *dvarName);
+  inline Dvar_GetBool_t Dvar_GetBool = reinterpret_cast<Dvar_GetBool_t> (0x140287220);
+
+  using  Dvar_GetCombinedString_t = void (*) (char *out, int startArg);
+  inline Dvar_GetCombinedString_t Dvar_GetCombinedString = reinterpret_cast<Dvar_GetCombinedString_t> (0x140201060);
+
+  using  Dvar_GetFloat_t = float (*) (const char *dvarName);
+  inline Dvar_GetFloat_t Dvar_GetFloat = reinterpret_cast<Dvar_GetFloat_t> (0x140287260);
+
+  using  Dvar_GetIntByName_t = int (*) (const char *dvarName);
+  inline Dvar_GetIntByName_t Dvar_GetIntByName = reinterpret_cast<Dvar_GetIntByName_t> (0x1402872A0);
+
+  using  Dvar_GetString_t = const char * (*) (const char *dvarName);
+  inline Dvar_GetString_t Dvar_GetString = reinterpret_cast<Dvar_GetString_t> (0x1402872E0);
+
+  using  Dvar_GetVariantString_t = const char * (*) (const char *dvarName);
+  inline Dvar_GetVariantString_t Dvar_GetVariantString = reinterpret_cast<Dvar_GetVariantString_t> (0x140287400);
+
+  using  Dvar_Init_t = void (*) (void);
+  inline Dvar_Init_t Dvar_Init = reinterpret_cast<Dvar_Init_t> (0x140287520);
+
+  using  Dvar_IsValidName_t = bool (*) (const char *dvarName);
+  inline Dvar_IsValidName_t Dvar_IsValidName = reinterpret_cast<Dvar_IsValidName_t> (0x140287550);
+
+  using  Dvar_LoadDvarsAddFlags_t = void (*) (void *memFile, dvar_flags flags);
+  inline Dvar_LoadDvarsAddFlags_t Dvar_LoadDvarsAddFlags = reinterpret_cast<Dvar_LoadDvarsAddFlags_t> (0x1402875C0);
 
   using  Dvar_RegisterBool_t = dvar* (*) (const char* name, bool value, unsigned int flags, const char* description);
   inline Dvar_RegisterBool_t Dvar_RegisterBool = reinterpret_cast<Dvar_RegisterBool_t> (0x140287CE0);
 
-  using  Dvar_RegisterString_t = dvar* (*) (const char* name, const char* value, unsigned int flags, const char* description);
+  using  Dvar_RegisterColor_t = dvar * (*) (const char *dvarName, float r, float g, float b, float a, dvar_flags flags, const char *description);
+  inline Dvar_RegisterColor_t Dvar_RegisterColor = reinterpret_cast<Dvar_RegisterColor_t> (0x140287DC0);
+
+  using  Dvar_RegisterEnum_t = dvar * (*) (const char *dvarName, const char **valueList, int defaultIndex, dvar_flags flags, const char *description);
+  inline Dvar_RegisterEnum_t Dvar_RegisterEnum = reinterpret_cast<Dvar_RegisterEnum_t> (0x140287FC0);
+
+  using  Dvar_RegisterFloat_t = dvar * (*) (const char *dvarName, float value, float min, float max, dvar_flags flags, const char *description);
+  inline Dvar_RegisterFloat_t Dvar_RegisterFloat = reinterpret_cast<Dvar_RegisterFloat_t> (0x1402880C0);
+
+  using  Dvar_RegisterInt_t = dvar * (*) (const char *dvarName, int value, int min, int max, dvar_flags flags, const char *description);
+  inline Dvar_RegisterInt_t Dvar_RegisterInt = reinterpret_cast<Dvar_RegisterInt_t> (0x1402881F0);
+
+  using  Dvar_RegisterString_t = dvar * (*) (const char *dvarName, const char *value, dvar_flags flags, const char *description);
   inline Dvar_RegisterString_t Dvar_RegisterString = reinterpret_cast<Dvar_RegisterString_t> (0x140288590);
 
-  using  Dvar_SetFromStringByName_t = dvar* (*) (const char* name, const char* value);
+  using  Dvar_RegisterVariant_t = dvar * (*) (const char *dvarName, dvar_type type, dvar_flags flags, const dvar_value *value, const dvar_limits *domain, const char *description);
+  inline Dvar_RegisterVariant_t Dvar_RegisterVariant = reinterpret_cast<Dvar_RegisterVariant_t> (0x1402882E0);
+
+  using  Dvar_RegisterVec2_t = dvar * (*) (const char *dvarName, float x, float y, float min, float max, dvar_flags flags, const char *description);
+  inline Dvar_RegisterVec2_t Dvar_RegisterVec2 = reinterpret_cast<Dvar_RegisterVec2_t> (0x140288660);
+
+  using  Dvar_RegisterVec3_t = dvar * (*) (const char *dvarName, float x, float y, float z, float min, float max, dvar_flags flags, const char *description);
+  inline Dvar_RegisterVec3_t Dvar_RegisterVec3 = reinterpret_cast<Dvar_RegisterVec3_t> (0x140288780);
+
+  using  Dvar_RegisterVec3Color_t = dvar * (*) (const char *dvarName, float r, float g, float b, dvar_flags flags, const char *description);
+  inline Dvar_RegisterVec3Color_t Dvar_RegisterVec3Color = reinterpret_cast<Dvar_RegisterVec3Color_t> (0x1402888B0);
+
+  using  Dvar_RegisterVec4_t = dvar * (*) (const char *dvarName, float x, float y, float z, float w, float min, float max, dvar_flags flags, const char *description);
+  inline Dvar_RegisterVec4_t Dvar_RegisterVec4 = reinterpret_cast<Dvar_RegisterVec4_t> (0x1402889D0);
+
+  using  Dvar_Reset_f_t = void (__fastcall *) (void);
+  inline Dvar_Reset_f_t Dvar_Reset_f = reinterpret_cast<Dvar_Reset_f_t> (0x140201350);
+
+  using  Dvar_Reset_t = void (*) (dvar *dvar, dvar_set_source setSource);
+  inline Dvar_Reset_t Dvar_Reset = reinterpret_cast<Dvar_Reset_t> (0x140288DB0);
+
+  using  Dvar_ResetScriptInfo_t = void (*) (void);
+  inline Dvar_ResetScriptInfo_t Dvar_ResetScriptInfo = reinterpret_cast<Dvar_ResetScriptInfo_t> (0x140288DD0);
+
+  using  Dvar_Set_f_t = void (__fastcall *) (void);
+  inline Dvar_Set_f_t Dvar_Set_f = reinterpret_cast<Dvar_Set_f_t> (0x140201590);
+
+  using  Dvar_SetA_f_t = void (__fastcall *) (void);
+  inline Dvar_SetA_f_t Dvar_SetA_f = reinterpret_cast<Dvar_SetA_f_t> (0x1402013A0);
+
+  using  Dvar_SetBool_t = void (*) (dvar *dvar, bool value);
+  inline Dvar_SetBool_t Dvar_SetBool = reinterpret_cast<Dvar_SetBool_t> (0x140288FB0);
+
+  using  Dvar_SetBoolByName_t = void (*) (const char *nname, bool value);
+  inline Dvar_SetBoolByName_t Dvar_SetBoolByName = reinterpret_cast<Dvar_SetBoolByName_t> (0x140289000);
+
+  using  Dvar_SetCommand_t = void (*) (const char *dvarName, const char *string);
+  inline Dvar_SetCommand_t Dvar_SetCommand = reinterpret_cast<Dvar_SetCommand_t> (0x1402892A0);
+
+  using  Dvar_SetDomainFunc_t = void (*) (dvar *, bool (*callback)(dvar*, dvar_value *));
+  inline Dvar_SetDomainFunc_t Dvar_SetDomainFunc = reinterpret_cast<Dvar_SetDomainFunc_t> (0x140289350);
+
+  using  Dvar_SetFloat_t = void (*) (dvar *dvar, float value);
+  inline Dvar_SetFloat_t Dvar_SetFloat = reinterpret_cast<Dvar_SetFloat_t> (0x1402893A0);
+
+  using  Dvar_SetFromDvar_f_t = void (__fastcall *) (void);
+  inline Dvar_SetFromDvar_f_t Dvar_SetFromDvar_f = reinterpret_cast<Dvar_SetFromDvar_f_t> (0x140201510);
+
+  using  Dvar_SetFromStringByName_t = dvar * (*) (const char*, const char*);
   inline Dvar_SetFromStringByName_t Dvar_SetFromStringByName = reinterpret_cast<Dvar_SetFromStringByName_t> (0x140289570);
+
+  using  Dvar_SetFromStringFromSource_t = void (*) (dvar *dvar, const char *string, dvar_set_source source);
+  inline Dvar_SetFromStringFromSource_t Dvar_SetFromStringFromSource = reinterpret_cast<Dvar_SetFromStringFromSource_t> (0x140289640);
+
+  using  Dvar_SetInt_t = void (*) (dvar *dvar, int value);
+  inline Dvar_SetInt_t Dvar_SetInt = reinterpret_cast<Dvar_SetInt_t> (0x1402896E0);
+
+  using  Dvar_SetIntByName_t = void (*) (const char *name, int value);
+  inline Dvar_SetIntByName_t Dvar_SetIntByName = reinterpret_cast<Dvar_SetIntByName_t> (0x140289740);
+
+  using  Dvar_SetLatchedValue_t = void (*) (dvar *dvar, dvar_value *value);
+  inline Dvar_SetLatchedValue_t Dvar_SetLatchedValue = reinterpret_cast<Dvar_SetLatchedValue_t> (0x140289910);
+
+  using  Dvar_SetModified_t = void (*) (dvar *dvar);
+  inline Dvar_SetModified_t Dvar_SetModified = reinterpret_cast<Dvar_SetModified_t> (0x140289A70);
+
+  using  Dvar_SetString_t = void (*) (dvar *dvar, const char *value);
+  inline Dvar_SetString_t Dvar_SetString = reinterpret_cast<Dvar_SetString_t> (0x140289A80);
+
+  using  Dvar_SetStringByName_t = void (*) (const char *name, const char *value);
+  inline Dvar_SetStringByName_t Dvar_SetStringByName = reinterpret_cast<Dvar_SetStringByName_t> (0x140289AE0);
+
+  using  Dvar_SetVariant_t = void (*) (dvar *dvar, dvar_value value, dvar_set_source source);
+  inline Dvar_SetVariant_t Dvar_SetVariant = reinterpret_cast<Dvar_SetVariant_t> (0x140289B80);
 
   using  Dvar_Sort_t = __int64 (*) (void);
   inline Dvar_Sort_t Dvar_Sort = reinterpret_cast<Dvar_Sort_t> (0x14028A020);
+
+  using  Dvar_StringToColor_t = void (*) (const char *string, dvar_value *domain);
+  inline Dvar_StringToColor_t Dvar_StringToColor = reinterpret_cast<Dvar_StringToColor_t> (0x14028A090);
+
+  using  Dvar_StringToEnum_t = int (*) (const dvar_limits domain, const char *string);
+  inline Dvar_StringToEnum_t Dvar_StringToEnum = reinterpret_cast<Dvar_StringToEnum_t> (0x14028A1C0);
+
+  using  Dvar_StringToValue_t = dvar_value * (*) (dvar_value *dvarValue, dvar_type type, dvar_limits *domain, const char *string);
+  inline Dvar_StringToValue_t Dvar_StringToValue = reinterpret_cast<Dvar_StringToValue_t> (0x14028A2C0);
+
+  using  Dvar_ToggleInternal_t = bool (__fastcall *) (void);
+  inline Dvar_ToggleInternal_t Dvar_ToggleInternal = reinterpret_cast<Dvar_ToggleInternal_t> (0x140201620);
+
+  using  Dvar_TogglePrint_f_t = void (__fastcall *) (void);
+  inline Dvar_TogglePrint_f_t Dvar_TogglePrint_f = reinterpret_cast<Dvar_TogglePrint_f_t> (0x140201940);
+
+  using  Dvar_UpdateResetValue_t = void (*) (dvar *dvar, dvar_value value);
+  inline Dvar_UpdateResetValue_t Dvar_UpdateResetValue = reinterpret_cast<Dvar_UpdateResetValue_t> (0x14028A450);
+
+  using  Dvar_ValueInDomain_t = bool (*) (dvar_type type, dvar_value value, dvar_limits domain);
+  inline Dvar_ValueInDomain_t Dvar_ValueInDomain = reinterpret_cast<Dvar_ValueInDomain_t> (0x14028A550);
+
+  using  Dvar_ValuesEqual_t = bool (*) (dvar_type type, dvar_value val0, dvar_value val1);
+  inline Dvar_ValuesEqual_t Dvar_ValuesEqual = reinterpret_cast<Dvar_ValuesEqual_t> (0x14028A860);
+
+  using  Dvar_ValueToString_t = const char * (*) (dvar *dvar, dvar_value value);
+  inline Dvar_ValueToString_t Dvar_ValueToString = reinterpret_cast<Dvar_ValueToString_t> (0x14028A690);
 
   using  DW_SendPush_t = void (*) ();
   inline DW_SendPush_t DW_SendPush = reinterpret_cast<DW_SendPush_t> (0x14012ED70);
