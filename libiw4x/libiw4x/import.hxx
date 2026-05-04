@@ -43,6 +43,89 @@ namespace iw4x
   struct path_node_tree;
   struct statement;
 
+  // ???
+  //
+  enum dvar_flags
+  {
+    DVAR_NONE = 0x0,
+    DVAR_ARCHIVE = 0x1,
+    DVAR_LATCH = 0x2,
+    DVAR_CHEAT = 0x4,
+    DVAR_CODINFO = 0x8,
+    DVAR_SCRIPTINFO = 0x10,
+    DVAR_TEMP = 0x20,
+    DVAR_SAVED = 0x40,
+    DVAR_INTERNAL = 0x80,
+    DVAR_EXTERNAL = 0x100,
+    DVAR_USERINFO = 0x200,
+    DVAR_SERVERINFO = 0x400,
+    DVAR_INIT = 0x800,
+    DVAR_SYSTEMINFO = 0x1000,
+    DVAR_ROM = 0x2000,
+    DVAR_CHANGEABLE_RESET = 0x4000,
+    DVAR_AUTOEXEC = 0x8000,
+  };
+
+  typedef float vec_t;
+
+  // ???
+  //
+  union vec2_t
+  {
+    float v [2];
+
+    // ???
+    //
+    struct
+    {
+      float x;
+      float y;
+    };
+  };
+
+  // ???
+  //
+  union vec3_t
+  {
+    float v [3];
+
+    // ???
+    //
+    struct
+    {
+      float x;
+      float y;
+      float z;
+    };
+  };
+
+  // ???
+  //
+  union vec4_t
+  {
+    float value [4];
+
+    // ???
+    //
+    struct
+    {
+      float x;
+      float y;
+      float z;
+      float w;
+    }; // s1;
+
+    // ???
+    //
+    struct
+    {
+      float r;
+      float g;
+      float b;
+      float a;
+    }; // s2;
+  };
+
   // 29
   //
   enum network_source
@@ -103,6 +186,20 @@ namespace iw4x
     XASSET_TYPE_COUNT = 0x2B,
     XASSET_TYPE_STRING = 0x2B,
     XASSET_TYPE_ASSET_LIST = 0x2C,
+  };
+
+  // 39
+  //
+  enum error_parameter_t
+  {
+    ERROR_FATAL = 0x0,
+    ERROR_DROP = 0x1,
+    ERROR_SERVER_DISCONNECT = 0x2,
+    ERROR_DISCONNECT = 0x3,
+    ERROR_SCRIPT = 0x4,
+    ERROR_SCRIPT_DROP = 0x5,
+    ERROR_LOCALIZATION = 0x6,
+    ERROR_MAP_LOAD_ERROR_SUMMARY = 0x7,
   };
 
   // 68
@@ -517,7 +614,19 @@ namespace iw4x
     DVAR_TYPE_STRING = 0x7,
     DVAR_TYPE_COLOR = 0x8,
     DVAR_TYPE_FLOAT_3_COLOR = 0x9,
-    DVAR_TYPE_COUNT = 0xA,
+    DVAR_TYPE_INTEGER_64 = 0xA,
+    DVAR_TYPE_UNSIGNED_INTEGER_64 = 0xB,
+    DVAR_TYPE_COUNT = 0xC,
+  };
+
+  // 367
+  //
+  enum dvar_set_source
+  {
+    DVAR_SOURCE_INTERNAL = 0x0,
+    DVAR_SOURCE_EXTERNAL = 0x1,
+    DVAR_SOURCE_SCRIPT = 0x2,
+    DVAR_SOURCE_DEVGUI = 0x3,
   };
 
   // 368
@@ -737,8 +846,10 @@ namespace iw4x
     bool enabled;
     int integer;
     unsigned int unsigned_integer;
+    std::int64_t  integer64;
+    std::uint64_t unsigned_integer64;
     float value;
-    float vector[4];
+    vec4_t vector[4];
     const char* string;
     char color[4];
   };
@@ -777,21 +888,36 @@ namespace iw4x
   struct dvar
   {
     const char* name;
-    unsigned int flags;
+    dvar_flags flags;
     dvar_type type;
-    dvar_value current_value;
-    dvar_value latched_value;
-    dvar_value reset_value;
+    bool modified;
+    std::uint8_t pad0[2];
+    dvar_value current;
+    dvar_value latched;
+    dvar_value reset;
     dvar_limits domain;
     bool (__cdecl* domain_function) (dvar*, dvar_value);
     dvar* hash_next;
   };
 
+  // 957
+  //
   struct sound_alias_list
   {
     const char* alias_name;
     sound_alias* head;
     int count;
+  };
+
+  // 961
+  //
+  struct cmd_arguments
+  {
+    int nesting;
+    int local_client_number[8];
+    int controller_index[8];
+    int argument_count[8];
+    const char **argument_vector[8];
   };
 
   // 962
@@ -4603,13 +4729,15 @@ namespace iw4x
     int last_entity_reference;
   };
 
-  /* 1591 */
+  // 1591
+  //
   struct ui_local_variable
   {
     ui_local_variable_type type;
     const char* name;
 
-    /* 1590 */
+    // 1590
+    //
     union
     {
       int integer;
@@ -4618,13 +4746,15 @@ namespace iw4x
     } u;
   };
 
-  /* 1592 */
+  // 1592
+  //
   struct ui_local_variable_context
   {
     ui_local_variable table [256];
   };
 
-  /* 1593 */
+  // 1593
+  //
   struct ui_context
   {
     int local_client_number;
@@ -4632,7 +4762,8 @@ namespace iw4x
     int real_time;
     int frame_time;
 
-    /* 1589 */
+    // 1589
+    //
     struct
     {
       float x;
@@ -4652,6 +4783,23 @@ namespace iw4x
     menu_definition* menu_stack [16];
     int open_menu_count;
     ui_local_variable_context local_variables;
+  };
+
+  // 1842
+  //
+  struct temporary_priority
+  {
+    void* thread_handle;
+    int old_priority;
+  };
+
+  // 1851
+  //
+  struct fast_critical_section
+  {
+    volatile long read_count;
+    volatile long write_count;
+    temporary_priority temporary_priority;
   };
 
   // 2096
@@ -4711,7 +4859,7 @@ namespace iw4x
   using  bdLobbyConnectionStartTask_t = int32_t (*) (void*, void**, uint8_t, uint8_t, void*, float);
   inline bdLobbyConnectionStartTask_t bdLobbyConnectionStartTask = reinterpret_cast<bdLobbyConnectionStartTask_t> (0x140322CC0);
 
-  using  bdLobbyService_t /* guessed */ = void* (*) ();
+  using  bdLobbyService_t = void* (*) ();
   inline bdLobbyService_t bdLobbyService = reinterpret_cast<bdLobbyService_t> (0x140136210);
 
   using  bdLobbyServiceImplConnect_t = bool (*) (void*, void*, void*, bool);
@@ -4762,6 +4910,9 @@ namespace iw4x
   using  Com_Frame_Try_Block_Function_t = int64_t (*) ();
   inline Com_Frame_Try_Block_Function_t Com_Frame_Try_Block_Function = reinterpret_cast<Com_Frame_Try_Block_Function_t> (0x1401F9930);
 
+  using  CopyStringInternal_t = const char* (*) (const char *);
+  inline CopyStringInternal_t CopyStringInternal = reinterpret_cast<CopyStringInternal_t> (0x140281470);
+
   using  DB_FindXAssetHeader_t = xasset_header (*) (xasset_type, const char* name);
   inline DB_FindXAssetHeader_t DB_FindXAssetHeader = reinterpret_cast<DB_FindXAssetHeader_t> (0x140129220);
 
@@ -4777,8 +4928,35 @@ namespace iw4x
   using  Dvar_SetFromStringByName_t = dvar* (*) (const char* name, const char* value);
   inline Dvar_SetFromStringByName_t Dvar_SetFromStringByName = reinterpret_cast<Dvar_SetFromStringByName_t> (0x140289570);
 
+  using  Dvar_Sort_t = __int64 (*) (void);
+  inline Dvar_Sort_t Dvar_Sort = reinterpret_cast<Dvar_Sort_t> (0x14028A020);
+
   using  DW_SendPush_t = void (*) ();
   inline DW_SendPush_t DW_SendPush = reinterpret_cast<DW_SendPush_t> (0x14012ED70);
+
+  using  FreeStringInternal_t = void (*) (const char*);
+  inline FreeStringInternal_t FreeStringInternal = reinterpret_cast<FreeStringInternal_t> (0x140281490);
+
+  using  I_strcmp_t = __int64 (*) (const char *s0, const char *s1);
+  inline I_strcmp_t I_strcmp = reinterpret_cast<I_strcmp_t> (0x14028E200);
+
+  using  I_stricmp_t = int (*) (const char* s0, const char* s1);
+  inline I_stricmp_t I_stricmp = reinterpret_cast<I_stricmp_t> (0x14028E250);
+
+  using  I_strlwr_t = char * (*) (char *s);
+  inline I_strlwr_t I_strlwr = reinterpret_cast<I_strlwr_t> (0x14028E400);
+
+  using  I_strncat_t = void (*) (char *dest, int size, const char *src);
+  inline I_strncat_t I_strncat = reinterpret_cast<I_strncat_t> (0x14028E430);
+
+  using  I_strncmp_t = __int64 (*) (const char *s0, const char *s1, int n);
+  inline I_strncmp_t I_strncmp = reinterpret_cast<I_strncmp_t> (0x14028E4B0);
+
+  using  I_strncpyz_t = void (*) (char *dest, const char *src, int destsize);
+  inline I_strncpyz_t I_strncpyz = reinterpret_cast<I_strncpyz_t> (0x14028E500);
+
+  using  I_strnicmp_t = int (*) (const char *s0, const char *s1, int n);
+  inline I_strnicmp_t I_strnicmp = reinterpret_cast<I_strnicmp_t> (0x14028E530);
 
   using  IWNet_Frame_t = void (*) (int);
   inline IWNet_Frame_t IWNet_Frame = reinterpret_cast<IWNet_Frame_t> (0x14012DF70);
@@ -4825,14 +5003,26 @@ namespace iw4x
   using  R_LoadGraphicsAssets_t = void (*) (void);
   inline R_LoadGraphicsAssets_t R_LoadGraphicsAssets = reinterpret_cast<R_LoadGraphicsAssets_t> (0x14002FA70);
 
+  using  StringTable_GetAsset_t = __int64 (*) (const char *, __int64 *);
+  inline StringTable_GetAsset_t StringTable_GetAsset = reinterpret_cast<StringTable_GetAsset_t> (0x140282E50);
+
+  using  StringTable_GetColumnValueForRow_t = const CHAR * (*) (__int64, int, int);
+  inline StringTable_GetColumnValueForRow_t StringTable_GetColumnValueForRow = reinterpret_cast<StringTable_GetColumnValueForRow_t> (0x140282E70);
+
   using  SV_ConnectionlessPacket_t = void (*) (network_address* from, message* msg);
   inline SV_ConnectionlessPacket_t SV_ConnectionlessPacket = reinterpret_cast<SV_ConnectionlessPacket_t> (0x140240090);
 
   using  SV_GameSendServerCommand_t = void (*) (int client_num, int cmd_type, const char* text);
   inline SV_GameSendServerCommand_t SV_GameSendServerCommand = reinterpret_cast<SV_GameSendServerCommand_t> (0x1402369B0);
 
+  using  Sys_Milliseconds_t = __int64 (*) (void);
+  inline Sys_Milliseconds_t Sys_Milliseconds = reinterpret_cast<Sys_Milliseconds_t> (0x1402AA460);
+
   using  Sys_SendPacket_t = bool (*) (size_t len, const char *buf, const network_address *a3);
   inline Sys_SendPacket_t Sys_SendPacket = reinterpret_cast<Sys_SendPacket_t> (0x1402AA1B0);
+
+  using  Sys_IsMainThread_t = bool (*) (void);
+  inline Sys_IsMainThread_t Sys_IsMainThread = reinterpret_cast<Sys_IsMainThread_t> (0x14020DE70);
 
   using  UI_AddMenuList_t = void (*) (ui_context*, menu_list*, int);
   inline UI_AddMenuList_t UI_AddMenuList = reinterpret_cast<UI_AddMenuList_t> (0x14026B6C0);
@@ -4851,7 +5041,15 @@ namespace iw4x
 
   // Internal globals
   //
-  inline void* g_lobby   = reinterpret_cast<void*> (0x140D513A0);
-  inline void* g_party   = reinterpret_cast<void*> (0x140D53740);
-  inline auto* ip_socket = reinterpret_cast<uint64_t*> (0x1467E8490);
+  inline void*                           g_lobby                = reinterpret_cast<void*>                  (0x140D513A0);
+  inline void*                           g_party                = reinterpret_cast<void*>                  (0x140D53740);
+  inline auto*                           ip_socket              = reinterpret_cast<uint64_t*>              (0x1467E8490);
+  inline dvar*                           dvar_pool              = reinterpret_cast<dvar*>                  (0x1466DB270);
+  inline cmd_arguments*                  cmd_args               = reinterpret_cast<cmd_arguments*>         (0x141C17810);
+  inline volatile fast_critical_section* dvar_critical_section  = reinterpret_cast<fast_critical_section*> (0x14673D280);
+  inline int**                           sv_dvar_modified_flags = reinterpret_cast<int**>                  (0x1466D3260);
+  inline dvar**                          dvarHashTable          = reinterpret_cast<dvar**>                 (0x14673B270);
+  inline bool*                           areDvarsSorted         = reinterpret_cast<bool*>                  (0x14673D270);
+  inline int*                            dvarCount              = reinterpret_cast<int*>                   (0x1466D3268);
+  inline dvar**                          sortedDvars            = reinterpret_cast<dvar**>                 (0x1466D3270);
 }
