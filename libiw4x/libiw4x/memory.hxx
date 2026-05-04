@@ -55,5 +55,23 @@ namespace iw4x
       //
       return write (destination, source, N - 1);
     }
+
+    // Address literal helpers.
+    //
+
+    // Produce a typed reference from a raw memory address.
+    //
+    // Note that we assume the caller has already verified the address falls
+    // within the mapped memory boundaries and is properly aligned for type T.
+    // If it's not, we are going to have a bad time when we actually try to
+    // dereference it.
+    //
+    template <typename T>
+    inline T&
+    iref (uintptr_t address) noexcept
+    {
+      T* p (reinterpret_cast<T*> (address));
+      return *p;
+    }
   };
 }
