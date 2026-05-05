@@ -4,20 +4,19 @@
 #include <chrono>
 #include <concepts>
 #include <cstddef>
+#include <functional>
 #include <memory>
+#include <source_location>
 #include <sstream>
+#include <string>
 #include <type_traits>
 #include <utility>
-
-#include <quill/Backend.h>
-#include <quill/LogFunctions.h>
-#include <quill/Logger.h>
 
 #include <libiw4x/export.hxx>
 
 namespace iw4x
 {
-  class logger
+  class LIBIW4X_SYMEXPORT logger
   {
   public:
     logger ();
@@ -34,21 +33,18 @@ namespace iw4x
 
   namespace log
   {
-    namespace detail
+    enum class level : uint8_t
     {
-      inline std::atomic<quill::Logger*>&
-      logger () noexcept
-      {
-        constinit static std::atomic<quill::Logger*> instance (nullptr);
-        return instance;
-      }
-    }
-
-    inline quill::Logger*
-    logger () noexcept
-    {
-      return detail::logger ().load (std::memory_order_acquire);
-    }
+      trace_l3,
+      trace_l2,
+      trace_l1,
+      debug,
+      info,
+      notice,
+      warning,
+      error,
+      critical
+    };
 
     // Minimum severity level.
     //
@@ -60,14 +56,22 @@ namespace iw4x
     // Notice that development builds open the full trace range.
     //
 #if LIBIW4X_DEVELOP
-    inline constexpr quill::LogLevel min_level (quill::LogLevel::TraceL3);
+    inline constexpr level min_level (level::trace_l3);
 #else
-    inline constexpr quill::LogLevel min_level (quill::LogLevel::Info);
+    inline constexpr level min_level (level::info);
 #endif
 
-    template <typename T, typename S>
-    concept Streamable = requires (S& stream, T&& value)
+    namespace detail
     {
+      LIBIW4X_SYMEXPORT bool
+      should_log_statement (level l) noexcept;
+
+      LIBIW4X_SYMEXPORT void
+      emit (level l, const std::source_location& loc, const std::string& msg);
+    }
+
+    template <typename T, typename S>
+    concept Streamable = requires (S& stream, T&& value) {
       {
         stream << std::forward<T> (value)
       } -> std::convertible_to<std::ostream&>;
@@ -88,16 +92,16 @@ namespace iw4x
     // The key here is that when execution reaches the end of the full
     // expression, C++ language rules naturally mandate the destruction of this
     // temporary. We rely on its destructor to submit the completely buffered
-    // string back to Quill.
+    // string back to our backend.
     //
-    template <quill::LogLevel L>
+    template <level L>
     struct stream_accumulator
     {
-      quill::SourceLocation location_;
-      std::ostringstream    stream_;
-      bool                  active_;
+      std::source_location location_;
+      std::ostringstream   stream_;
+      bool                 active_;
 
-      stream_accumulator (quill::SourceLocation location)
+      stream_accumulator (std::source_location location)
         : location_ (location), active_ (true) {}
 
       // Notice the move constructor and the active_ flag.
@@ -108,14 +112,15 @@ namespace iw4x
       // the same log message when they are respectively destroyed.
       //
       stream_accumulator (stream_accumulator&& other) noexcept
-        : location_ (other.location_),
+        : location_ (std::move (other.location_)),
           stream_ (std::move (other.stream_)),
-          active_ (std::exchange (other.active_, false))
+          active_ (other.active_)
       {
         other.active_ = false;
       }
 
-      stream_accumulator& operator = (stream_accumulator&&) = delete;
+      stream_accumulator&
+      operator = (stream_accumulator&&) = delete;
 
       ~stream_accumulator ()
       {
@@ -123,16 +128,14 @@ namespace iw4x
         {
           if (active_)
           {
-            quill::Logger* logger_ptr (logger ());
-
-            if (logger_ptr != nullptr && logger_ptr->should_log_statement (L))
+            if (detail::should_log_statement (L))
             {
-              std::string message (std::move (stream_).str ());
+              std::string message (stream_.str ());
 
               // We avoid pushing completely empty strings to the backend.
               //
               if (!message.empty ())
-                quill::log (logger_ptr, "", L, "{}", location_, message);
+                detail::emit (L, location_, message);
             }
           }
         }
@@ -171,13 +174,13 @@ namespace iw4x
 
     namespace detail
     {
-      template <typename T, quill::LogLevel L>
+      template <typename T, level L>
       concept StreamableToAccumulator =
         requires (stream_accumulator<L>& accumulator,
                   std::remove_cvref_t<T> const& value)
       {
         {
-            accumulator << value
+          accumulator << value
         } -> std::same_as<stream_accumulator<L>&>;
       };
 
@@ -188,32 +191,32 @@ namespace iw4x
       // signature. Instead, we capture the call site location during the
       // implicit conversion of the right-hand operand.
       //
-      // That is, when evaluating 'log::error << "foo"', overload resolution
-      // selects an operator<< that accepts this wrapper type. The compiler
-      // performs an implicit conversion of the operand, invoking the wrapper's
-      // templated constructor which specifies std::source_location::current ()
-      // as a default argument.
+      // That is, when evaluating 'error << "foo"', overload resolution selects
+      // an operator<< that accepts this wrapper type. The compiler performs an
+      // implicit conversion of the operand, invoking the wrapper's templated
+      // constructor which specifies std::source_location::current () as a
+      // default argument.
       //
       // Notice also that the payload is then type-erased via a function pointer
       // and forwarded to the stream accumulator.
       //
-      template <quill::LogLevel L>
+      template <level L>
       struct first_arg
       {
         void const* payload_;
 
-        void (*format_func_)  (stream_accumulator<L>&, void const*);
+        void (*format_func_) (stream_accumulator<L>&, void const*);
         void (*destroy_func_) (void*);
 
         alignas (std::max_align_t) std::byte storage_ [128];
 
-        quill::SourceLocation location_;
+        std::source_location location_;
 
         template <typename T>
           requires StreamableToAccumulator<T, L>
         first_arg (T&& value,
-                   quill::SourceLocation location =
-                     quill::SourceLocation::current ()) noexcept
+                   std::source_location location =
+                     std::source_location::current ()) noexcept
           : destroy_func_ (nullptr),
             location_ (location)
         {
@@ -291,7 +294,7 @@ namespace iw4x
       };
     }
 
-    template <quill::LogLevel L>
+    template <level L>
     struct severity
     {
       stream_accumulator<L>
@@ -306,15 +309,15 @@ namespace iw4x
       }
     };
 
-    inline constexpr severity<quill::LogLevel::TraceL3>  trace_l3 {};
-    inline constexpr severity<quill::LogLevel::TraceL2>  trace_l2 {};
-    inline constexpr severity<quill::LogLevel::TraceL1>  trace_l1 {};
-    inline constexpr severity<quill::LogLevel::Debug>    debug {};
-    inline constexpr severity<quill::LogLevel::Info>     info {};
-    inline constexpr severity<quill::LogLevel::Notice>   notice {};
-    inline constexpr severity<quill::LogLevel::Warning>  warning {};
-    inline constexpr severity<quill::LogLevel::Error>    error {};
-    inline constexpr severity<quill::LogLevel::Critical> critical {};
+    inline constexpr severity<level::trace_l3> trace_l3 {};
+    inline constexpr severity<level::trace_l2> trace_l2 {};
+    inline constexpr severity<level::trace_l1> trace_l1 {};
+    inline constexpr severity<level::debug> debug {};
+    inline constexpr severity<level::info> info {};
+    inline constexpr severity<level::notice> notice {};
+    inline constexpr severity<level::warning> warning {};
+    inline constexpr severity<level::error> error {};
+    inline constexpr severity<level::critical> critical {};
 
     struct rate_limiter
     {
@@ -332,7 +335,7 @@ namespace iw4x
       bool
       operator () () noexcept
       {
-        time_point now  (clock::now ());
+        time_point now (clock::now ());
         time_point last (last_time_.load (std::memory_order_acquire));
 
         // Allow the event if this is the first occurrence or if the elapsed

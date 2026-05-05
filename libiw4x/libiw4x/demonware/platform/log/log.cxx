@@ -2,6 +2,7 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <cassert>
 
 #include <libiw4x/logger.hxx>
 

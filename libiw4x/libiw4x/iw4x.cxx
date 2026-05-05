@@ -1,7 +1,10 @@
 #include <libiw4x/iw4x.hxx>
 
+#include <io.h>
+
 #include <array>
 #include <cstdint>
+#include <ios>
 #include <string>
 
 #include <libiw4x/logger.hxx>
